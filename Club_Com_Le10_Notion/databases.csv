@@ -1,0 +1,107 @@
+database_id,database_name,parent_page_id,property_name,property_type,description,source_file
+DB-001,Opportunités,P-001,Nom de l’opportunité,title,Titre de l’opportunité,opportunites.csv
+DB-001,Opportunités,P-001,Date de détection,date,Date de découverte,opportunites.csv
+DB-001,Opportunités,P-001,Source,text,Source de veille,opportunites.csv
+DB-001,Opportunités,P-001,Lien annonce,url,Lien vers l’annonce,opportunites.csv
+DB-001,Opportunités,P-001,Acheteur / client,text,Nom du client ou de l’acheteur,opportunites.csv
+DB-001,Opportunités,P-001,Type d’acheteur,select,Type d’acheteur,opportunites.csv
+DB-001,Opportunités,P-001,Territoire,text,Zone géographique,opportunites.csv
+DB-001,Opportunités,P-001,Objet,text,Objet synthétique,opportunites.csv
+DB-001,Opportunités,P-001,Résumé IA,rich_text,Synthèse IA,opportunites.csv
+DB-001,Opportunités,P-001,Type d’opportunité,select,Typologie,opportunites.csv
+DB-001,Opportunités,P-001,Date limite,date,Date limite de réponse,opportunites.csv
+DB-001,Opportunités,P-001,Métiers concernés,multi_select,Métiers sollicités,opportunites.csv
+DB-001,Opportunités,P-001,Budget estimé,number,Budget estimé,opportunites.csv
+DB-001,Opportunités,P-001,Budget confirmé,number,Budget confirmé,opportunites.csv
+DB-001,Opportunités,P-001,Niveau de complexité,select,Niveau de complexité,opportunites.csv
+DB-001,Opportunités,P-001,Score Macao,number,Score interne Macao,opportunites.csv
+DB-001,Opportunités,P-001,Score Club Com’,number,Score réseau Club Com’,opportunites.csv
+DB-001,Opportunités,P-001,Recommandation IA,select,Recommandation IA,opportunites.csv
+DB-001,Opportunités,P-001,Décision finale,select,Décision prise,opportunites.csv
+DB-001,Opportunités,P-001,Statut,select,Statut du suivi,opportunites.csv
+DB-001,Opportunités,P-001,Mode de réponse recommandé,select,Mode conseillé,opportunites.csv
+DB-001,Opportunités,P-001,Référent Macao,text,Référent interne,opportunites.csv
+DB-001,Opportunités,P-001,Freelances pressentis,text,Freelances à mobiliser,opportunites.csv
+DB-001,Opportunités,P-001,Références mobilisables,text,Références utiles,opportunites.csv
+DB-001,Opportunités,P-001,Dossier de réponse lié,text,Dossier associé,opportunites.csv
+DB-001,Opportunités,P-001,Dossier Drive,url,Lien Drive,opportunites.csv
+DB-001,Opportunités,P-001,Date de prochaine action,date,Prochaine échéance,opportunites.csv
+DB-001,Opportunités,P-001,Prochaine action,rich_text,Action à mener,opportunites.csv
+DB-001,Opportunités,P-001,Notes internes,rich_text,Notes,opportunites.csv
+DB-001,Opportunités,P-001,Risques identifiés,rich_text,Risques,opportunites.csv
+DB-001,Opportunités,P-001,Pièces demandées,rich_text,Pièces demandées,opportunites.csv
+DB-001,Opportunités,P-001,Critères de notation,rich_text,Grille de notation,opportunites.csv
+DB-001,Opportunités,P-001,Résultat,select,Résultat final,opportunites.csv
+DB-001,Opportunités,P-001,Montant gagné,number,Montant gagné,opportunites.csv
+DB-001,Opportunités,P-001,Motif abandon / perte,rich_text,Motif de non-succès,opportunites.csv
+DB-002,Freelances & coworkers,P-001,Nom,title,Nom de la personne,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Structure / marque,text,Marque ou structure,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Métier principal,select,Métier principal,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Compétences,multi_select,Compétences,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Portfolio,url,Portfolio,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Site web,url,Site web,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,LinkedIn,url,LinkedIn,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Email,email,Email,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Téléphone,phone_number,Téléphone,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Présence au coworking,select,Présence,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Zone d’intervention,text,Zone d’intervention,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Disponibilité,select,Disponibilité,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Mode de collaboration accepté,multi_select,Modes acceptés,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,TJM / forfait indicatif,number,Indication tarifaire,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Statut juridique,select,Statut,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,SIRET,text,SIRET,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Assurance RC Pro,checkbox,Assurance RC Pro,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Références,rich_text,Références,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Opportunités associées,rich_text,Opportunités associées,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Dossiers associés,rich_text,Dossiers associés,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Date de dernier contact,date,Dernier contact,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Notes,rich_text,Notes,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Accord sollicitation Club Com’,checkbox,Accord sollicitation,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Accord transmission opportunités,checkbox,Accord transmission,freelances_coworkers.csv
+DB-002,Freelances & coworkers,P-001,Priorité de mobilisation,select,Priorité,freelances_coworkers.csv
+DB-003,Références & compétences,P-001,Nom de la référence,title,Nom de la référence,references_competences.csv
+DB-003,Références & compétences,P-001,Client,text,Client concerné,references_competences.csv
+DB-003,Références & compétences,P-001,Année,number,Année,references_competences.csv
+DB-003,Références & compétences,P-001,Type de projet,select,Typologie du projet,references_competences.csv
+DB-003,Références & compétences,P-001,Description courte,rich_text,Courte description,references_competences.csv
+DB-003,Références & compétences,P-001,Description longue,rich_text,Description détaillée,references_competences.csv
+DB-003,Références & compétences,P-001,Compétences mobilisées,multi_select,Compétences mobilisées,references_competences.csv
+DB-003,Références & compétences,P-001,Réalisé par,text,Réalisé par,references_competences.csv
+DB-003,Références & compétences,P-001,Porté par Macao,checkbox,Porté par Macao,references_competences.csv
+DB-003,Références & compétences,P-001,Lien / dossier,url,Lien ou dossier,references_competences.csv
+DB-003,Références & compétences,P-001,Images / portfolio,url,Visuels ou portfolio,references_competences.csv
+DB-003,Références & compétences,P-001,Utilisable AO,checkbox,Utilisable en AO,references_competences.csv
+DB-003,Références & compétences,P-001,Niveau de pertinence,select,Niveau de pertinence,references_competences.csv
+DB-003,Références & compétences,P-001,Secteur,text,Secteur,references_competences.csv
+DB-003,Références & compétences,P-001,Montant approximatif,number,Montant approximatif,references_competences.csv
+DB-003,Références & compétences,P-001,Contact référence,text,Contact référence,references_competences.csv
+DB-003,Références & compétences,P-001,Opportunités liées,rich_text,Opportunités liées,references_competences.csv
+DB-003,Références & compétences,P-001,Notes,rich_text,Notes,references_competences.csv
+DB-004,Dossiers de réponse,P-001,Nom du dossier,title,Nom du dossier,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Opportunité liée,text,Opportunité liée,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Date limite,date,Date limite,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Responsable,text,Responsable,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Mode de réponse,select,Mode de réponse,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Équipe mobilisée,rich_text,Équipe,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Références utilisées,rich_text,Références utilisées,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Dossier Drive,url,Dossier Drive,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Statut dossier,select,Statut,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Pièces administratives,rich_text,Pièces admin,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Mémoire technique,rich_text,Mémoire technique,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Offre financière,rich_text,Offre financière,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Dépôt,select,Dépôt,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Niveau de risque,select,Niveau de risque,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Questions à poser,rich_text,Questions à poser,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Réponses reçues,rich_text,Réponses reçues,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Check-list finale,rich_text,Check-list finale,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Notes,rich_text,Notes,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Résultat,select,Résultat,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Date de dépôt,date,Date de dépôt,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Montant proposé,number,Montant proposé,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Retours acheteur,rich_text,Retours acheteur,dossiers_reponse.csv
+DB-004,Dossiers de réponse,P-001,Éléments à réutiliser,rich_text,Éléments à réutiliser,dossiers_reponse.csv
+
+
+
+
+

@@ -1,0 +1,18 @@
+page_id,title,parent_id,level,page_type,status,source_file
+P-001,Club Com’ Le 10 — Opportunités & appels d’offres,,0,root,active,README.md
+P-002,Documentation d’utilisation,P-001,1,documentation,active,guide_utilisation.md
+P-003,Kit administratif Macao,P-001,1,documentation,active,kit_administratif_macao.md
+P-004,Modèles & prompts IA,P-001,1,documentation,active,modeles_prompts_ia.md
+P-005,Veille & sources,P-001,1,documentation,active,veille_sources.md
+P-006,Club Com’ / animation communauté,P-001,1,documentation,active,club_com_animation_communaute.md
+P-007,Bilan & capitalisation,P-001,1,documentation,active,bilan_capitalisation.md
+P-008,Modèle d’opportunité,P-001,1,documentation,active,fiche_modele_opportunite.md
+P-009,Modèle de freelance,P-001,1,documentation,active,fiche_modele_freelance.md
+P-010,Modèle de dossier de réponse,P-001,1,documentation,active,fiche_modele_dossier_reponse.md
+P-011,Opportunités,P-001,1,database,active,opportunites.csv
+P-012,Freelances & coworkers,P-001,1,database,active,freelances_coworkers.csv
+P-013,Références & compétences,P-001,1,database,active,references_competences.csv
+P-014,Dossiers de réponse,P-001,1,database,active,dossiers_reponse.csv
+P-015,Structure observée,P-001,1,documentation,legacy,structure.md
+P-016,Fiche marché,P-001,1,documentation,legacy,fiche_marche.md
+P-017,Marchés,P-001,1,database,legacy,marches.csv
