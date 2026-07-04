@@ -178,11 +178,11 @@ Login : macao / Le10Admin2026
 |------|--------|
 | **Dashboard Username** | `macao` |
 | **Dashboard Password** | `Le10Admin2026` |
-| **Notion API Key** | `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` |
-| **Opportunities DB** | `380eb37e55598044b885dde5eb3ca5a7` |
-| **Dossiers DB** | `380eb37e555980d486a3ed5c3fe5b950` |
+| **Notion API Key** | [À configurer dans Railway] |
+| **Opportunities DB** | [À configurer dans Railway] |
+| **Dossiers DB** | [À configurer dans Railway] |
 
-**⚠️ À changer après la première connexion !** (éditer `src/pages/Login.jsx`)
+**⚠️ Changez les credentials Dashboard après la première connexion !** (éditer `src/pages/Login.jsx`)
 
 ---
 

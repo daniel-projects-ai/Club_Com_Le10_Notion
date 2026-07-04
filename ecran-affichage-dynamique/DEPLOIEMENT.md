@@ -63,9 +63,9 @@ URL: `https://[votre-project].vercel.app`
 ### Étape 4 : Variables d'environnement
 Allez à **Project Settings** → **Variables** et ajoutez :
 ```
-NOTION_API_KEY=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
-NOTION_DB_OPPORTUNITIES=380eb37e55598044b885dde5eb3ca5a7
-NOTION_DB_DOSSIERS=380eb37e555980d486a3ed5c3fe5b950
+NOTION_API_KEY=your_notion_api_key_here
+NOTION_DB_OPPORTUNITIES=your_opportunities_db_id_here
+NOTION_DB_DOSSIERS=your_dossiers_db_id_here
 PORT=5001
 NODE_ENV=production
 ```
