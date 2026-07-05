@@ -9,7 +9,6 @@ export default function ScreenTV() {
   const [fadeOut, setFadeOut] = useState(false)
   const [moderationState, setModerationState] = useState(null)
   const [opportunities, setOpportunities] = useState([])
-  const wsRef = useRef(null)
 
   const slides = [
     { id: 1, component: SlideOpportunities, duration: 20 },
@@ -38,34 +37,25 @@ export default function ScreenTV() {
     return () => clearInterval(interval)
   }, [])
 
-  // Connecter au WebSocket pour recevoir les mises à jour de modération
+  // Récupérer l'état de modération via HTTP polling
   useEffect(() => {
-    const wsUrl = window.location.hostname === 'localhost'
-      ? `ws://localhost:5001`
-      : `wss://clubcomle10notion-production.up.railway.app`
-    wsRef.current = new WebSocket(wsUrl)
-
-    wsRef.current.onmessage = (event) => {
+    const fetchModerationState = async () => {
       try {
-        const data = JSON.parse(event.data)
-        if (data.data) {
-          setModerationState(data.data)
-          console.log('📡 État modération reçu:', data.data)
-        }
+        const API_URL = window.location.hostname === 'localhost'
+          ? 'http://localhost:5001'
+          : 'https://clubcomle10notion-production.up.railway.app'
+        const res = await fetch(`${API_URL}/api/moderation/state`)
+        const data = await res.json()
+        setModerationState(data)
+        console.log('📡 État modération reçu:', data)
       } catch (err) {
-        console.error('❌ Erreur WebSocket:', err)
+        console.error('❌ Erreur chargement état:', err)
       }
     }
 
-    wsRef.current.onerror = (error) => {
-      console.error('❌ WebSocket error:', error)
-    }
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close()
-      }
-    }
+    fetchModerationState()
+    const interval = setInterval(fetchModerationState, 2000) // Vérifier toutes les 2s
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
