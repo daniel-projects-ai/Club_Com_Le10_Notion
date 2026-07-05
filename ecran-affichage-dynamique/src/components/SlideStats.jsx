@@ -1,9 +1,22 @@
 export default function SlideStats({ data }) {
+  const opps = data.opportunities || []
+
+  // Calculer les indicateurs à partir des vraies opportunités Notion
+  const parseBudget = (b) => parseInt(String(b).replace(/[^0-9]/g, ''), 10) || 0
+  const totalBudget = opps.reduce((sum, o) => sum + parseBudget(o.budget), 0)
+  const withBudget = opps.filter(o => parseBudget(o.budget) > 0)
+  const avgBudget = withBudget.length ? Math.round(totalBudget / withBudget.length) : 0
+  const distinctClients = new Set(
+    opps.map(o => o.client).filter(c => c && c !== 'Non spécifié')
+  ).size
+
+  const fmt = (n) => `${n.toLocaleString('fr-FR')}€`
+
   const stats = [
-    { label: 'Portefeuille total', value: data.stats.portfolio, icon: '💰', color: 'from-green-600 to-emerald-600' },
-    { label: 'Taux de réussite', value: data.stats.successRate, icon: '🎯', color: 'from-blue-600 to-cyan-600' },
-    { label: 'Opportunités actives', value: data.stats.activeOpportunities, icon: '📈', color: 'from-purple-600 to-pink-600' },
-    { label: 'Freelances mobilisés', value: data.stats.freelancesEngaged, icon: '👥', color: 'from-orange-600 to-red-600' }
+    { label: 'Opportunités actives', value: opps.length, icon: '📈', color: 'from-purple-600 to-pink-600' },
+    { label: 'Portefeuille total', value: fmt(totalBudget), icon: '💰', color: 'from-green-600 to-emerald-600' },
+    { label: 'Budget moyen', value: fmt(avgBudget), icon: '🎯', color: 'from-blue-600 to-cyan-600' },
+    { label: 'Clients / structures', value: distinctClients, icon: '🏛️', color: 'from-orange-600 to-red-600' }
   ]
 
   return (
@@ -32,25 +45,6 @@ export default function SlideStats({ data }) {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Statistiques supplémentaires */}
-      <div className="mt-12 w-full max-w-5xl bg-slate-700/50 rounded-2xl p-8 border border-slate-600">
-        <h3 className="text-2xl font-bold text-white mb-6">📈 Tendances du mois</h3>
-        <div className="grid grid-cols-3 gap-6 text-center">
-          <div>
-            <p className="text-3xl font-bold text-blue-400">+8</p>
-            <p className="text-slate-300 text-lg">Opportunités reçues</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-green-400">+5</p>
-            <p className="text-slate-300 text-lg">Réponses émises</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-purple-400">+2</p>
-            <p className="text-slate-300 text-lg">Marchés gagnés</p>
-          </div>
-        </div>
       </div>
 
       {/* Footer */}
