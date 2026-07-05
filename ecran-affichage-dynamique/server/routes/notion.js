@@ -1,19 +1,21 @@
 import express from 'express'
 import { Client } from '@notionhq/client'
-import { getOpportunities, getDossiers, getStats } from '../services/notionClient.js'
+import { getOpportunities, getDossiers, getStats, cleanNotionId } from '../services/notionClient.js'
 
 const router = express.Router()
 
 // GET /api/notion/debug - diagnostic temporaire
 router.get('/debug', async (req, res) => {
+  const cleanOpp = cleanNotionId(process.env.NOTION_DB_OPPORTUNITIES)
+  const cleanDos = cleanNotionId(process.env.NOTION_DB_DOSSIERS)
   const result = { env: {}, opportunities: {}, dossiers: {} }
   result.env.hasApiKey = !!process.env.NOTION_API_KEY
-  result.env.dbOpportunities = process.env.NOTION_DB_OPPORTUNITIES || '(non défini)'
-  result.env.dbDossiers = process.env.NOTION_DB_DOSSIERS || '(non défini)'
+  result.env.dbOpportunities = cleanOpp || '(non défini)'
+  result.env.dbDossiers = cleanDos || '(non défini)'
 
   const notion = new Client({ auth: process.env.NOTION_API_KEY })
 
-  for (const [key, dbId] of [['opportunities', process.env.NOTION_DB_OPPORTUNITIES], ['dossiers', process.env.NOTION_DB_DOSSIERS]]) {
+  for (const [key, dbId] of [['opportunities', cleanOpp], ['dossiers', cleanDos]]) {
     try {
       const r = await notion.databases.query({ database_id: dbId })
       result[key] = {

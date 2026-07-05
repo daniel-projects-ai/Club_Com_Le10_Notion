@@ -4,9 +4,18 @@ const notion = new Client({
   auth: process.env.NOTION_API_KEY || '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'
 })
 
+// Nettoyer un ID Notion : extraire les 32 caractères hexadécimaux
+// (supprime les ?v=..., slugs, tirets, etc. collés depuis une URL)
+export function cleanNotionId(raw) {
+  if (!raw) return raw
+  const withoutQuery = raw.split('?')[0]
+  const match = withoutQuery.replace(/-/g, '').match(/[0-9a-fA-F]{32}/g)
+  return match ? match[match.length - 1] : withoutQuery
+}
+
 const DATABASES = {
-  opportunities: process.env.NOTION_DB_OPPORTUNITIES || '380eb37e55598044b885dde5eb3ca5a7',
-  dossiers: process.env.NOTION_DB_DOSSIERS || '380eb37e555980d486a3ed5c3fe5b950'
+  opportunities: cleanNotionId(process.env.NOTION_DB_OPPORTUNITIES || '380eb37e55598044b885dde5eb3ca5a7'),
+  dossiers: cleanNotionId(process.env.NOTION_DB_DOSSIERS || '380eb37e555980d486a3ed5c3fe5b950')
 }
 
 // Helpers robustes pour extraire une propriété quel que soit son type
