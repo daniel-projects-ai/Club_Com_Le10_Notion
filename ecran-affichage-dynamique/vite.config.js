@@ -6,10 +6,14 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    hmr: false  // Désactiver le hot reload (pas de flash blanc)
+    hmr: false,  // Désactiver le hot reload (pas de flash blanc)
+    middlewareMode: false
   },
   build: {
     outDir: 'dist',
     sourcemap: false
+  },
+  preview: {
+    port: 3000
   }
 })
