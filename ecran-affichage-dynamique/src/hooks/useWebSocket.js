@@ -6,7 +6,9 @@ export default function useWebSocket(onMessage) {
 
   useEffect(() => {
     // Connecter au serveur WebSocket
-    const wsUrl = `ws://${window.location.hostname}:5001`
+    const wsUrl = window.location.hostname === 'localhost'
+      ? `ws://localhost:5001`
+      : `wss://clubcomle10notion-production.up.railway.app`
     ws.current = new WebSocket(wsUrl)
 
     ws.current.onopen = () => {

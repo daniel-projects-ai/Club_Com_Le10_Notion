@@ -27,9 +27,10 @@ export default function Dashboard() {
   async function fetchData() {
     try {
       setLoading(true)
+      const API_URL = 'https://clubcomle10notion-production.up.railway.app'
       const [oppRes, stateRes] = await Promise.all([
-        fetch('http://localhost:5001/api/notion/opportunities'),
-        fetch('http://localhost:5001/api/moderation/state')
+        fetch(`${API_URL}/api/notion/opportunities`),
+        fetch(`${API_URL}/api/moderation/state`)
       ])
 
       if (!oppRes.ok || !stateRes.ok) {
@@ -57,7 +58,8 @@ export default function Dashboard() {
 
   const toggleOpportunity = async (id) => {
     try {
-      const res = await fetch('http://localhost:5001/api/moderation/toggle-opportunity', {
+      const API_URL = 'https://clubcomle10notion-production.up.railway.app'
+      const res = await fetch(`${API_URL}/api/moderation/toggle-opportunity`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
@@ -74,7 +76,8 @@ export default function Dashboard() {
   }
 
   const togglePause = async () => {
-    await fetch('http://localhost:5001/api/moderation/pause', {
+    const API_URL = 'https://clubcomle10notion-production.up.railway.app'
+    await fetch(`${API_URL}/api/moderation/pause`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
@@ -136,7 +139,8 @@ export default function Dashboard() {
 
           <button
             onClick={async () => {
-              await fetch('http://localhost:5001/api/moderation/reset', { method: 'POST' })
+              const API_URL = 'https://clubcomle10notion-production.up.railway.app'
+              await fetch(`${API_URL}/api/moderation/reset`, { method: 'POST' })
               fetchData()
             }}
             className="rounded-2xl p-6 font-bold text-xl bg-slate-600 hover:bg-slate-700 text-white transition-all duration-300"
