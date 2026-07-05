@@ -13,11 +13,24 @@ const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
-// Middleware
+// Middleware CORS
+const allowedOrigins = [
+  'https://club-com-le10-notion.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173'
+]
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: false
+  credentials: false,
+  optionsSuccessStatus: 200
 }))
 app.use(express.json())
 
