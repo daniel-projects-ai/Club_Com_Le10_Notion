@@ -9,29 +9,58 @@ const DATABASES = {
   dossiers: process.env.NOTION_DB_DOSSIERS || '380eb37e555980d486a3ed5c3fe5b950'
 }
 
+// Helpers robustes pour extraire une propriété quel que soit son type
+function extractText(prop) {
+  if (!prop) return null
+  if (prop.title?.length) return prop.title.map(t => t.plain_text).join('')
+  if (prop.rich_text?.length) return prop.rich_text.map(t => t.plain_text).join('')
+  if (prop.select?.name) return prop.select.name
+  if (prop.multi_select?.length) return prop.multi_select.map(s => s.name).join(', ')
+  if (prop.date?.start) return prop.date.start
+  if (typeof prop.number === 'number') return String(prop.number)
+  if (prop.url) return prop.url
+  if (prop.formula?.string) return prop.formula.string
+  if (prop.formula?.number != null) return String(prop.formula.number)
+  return null
+}
+
+// Trouver la 1ère propriété correspondant à un des noms (insensible à la casse/accents)
+function findProp(properties, candidates) {
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const keys = Object.keys(properties)
+  for (const cand of candidates) {
+    const match = keys.find(k => norm(k).includes(norm(cand)))
+    if (match) return properties[match]
+  }
+  return null
+}
+
 // Récupérer les opportunités
 export async function getOpportunities() {
   try {
     const response = await notion.databases.query({
-      database_id: DATABASES.opportunities,
-      filter: {
-        property: 'Statut',
-        select: {
-          equals: 'Ouvert'
-        }
-      }
+      database_id: DATABASES.opportunities
     })
 
-    return response.results.map(page => ({
-      id: page.id,
-      name: page.properties['Nom de l\'opportunité']?.title?.[0]?.plain_text || 'Sans titre',
-      client: page.properties['Acheteur / client']?.rich_text?.[0]?.plain_text || 'Non spécifié',
-      deadline: page.properties['Date limite']?.date?.start || 'N/A',
-      budget: page.properties['Budget estimé']?.number ? `${page.properties['Budget estimé'].number}€` : 'À définir',
-      status: page.properties['Statut']?.select?.name || 'Inconnu',
-      type: page.properties['Mode de réponse recommandé']?.select?.name || 'Standard',
-      icon: '🎯'
-    }))
+    return response.results.map(page => {
+      const p = page.properties
+      return {
+        id: page.id,
+        name: extractText(findProp(p, ['nom de l', 'nom', 'titre', 'opportunit'])) || 'Sans titre',
+        client: extractText(findProp(p, ['acheteur', 'client'])) || 'Non spécifié',
+        deadline: extractText(findProp(p, ['date limite', 'deadline', 'date de detection', 'date'])) || 'N/A',
+        budget: (() => {
+          const b = extractText(findProp(p, ['budget']))
+          if (!b) return 'À définir'
+          return b.includes('€') ? b : `${b}€`
+        })(),
+        status: extractText(findProp(p, ['statut', 'status', 'etat'])) || 'Ouvert',
+        source: extractText(findProp(p, ['source'])) || '',
+        link: extractText(findProp(p, ['lien', 'annonce', 'url'])) || '',
+        type: extractText(findProp(p, ['mode de reponse', 'mode', 'type'])) || 'Standard',
+        icon: '🎯'
+      }
+    })
   } catch (err) {
     console.error('❌ Erreur Notion (Opportunités):', err.message)
     return []
