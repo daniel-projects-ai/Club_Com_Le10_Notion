@@ -1,35 +1,7 @@
 import express from 'express'
-import { getOpportunities, getDossiers, getStats, cleanNotionId, queryDatabase } from '../services/notionClient.js'
+import { getOpportunities, getDossiers, getStats } from '../services/notionClient.js'
 
 const router = express.Router()
-
-// GET /api/notion/debug - diagnostic temporaire
-router.get('/debug', async (req, res) => {
-  const cleanOpp = cleanNotionId(process.env.NOTION_DB_OPPORTUNITIES)
-  const cleanDos = cleanNotionId(process.env.NOTION_DB_DOSSIERS)
-  const result = { env: {}, opportunities: {}, dossiers: {} }
-  result.env.hasApiKey = !!process.env.NOTION_API_KEY
-  result.env.dbOpportunities = cleanOpp || '(non défini)'
-  result.env.dbDossiers = cleanDos || '(non défini)'
-
-  for (const [key, dbId] of [['opportunities', cleanOpp], ['dossiers', cleanDos]]) {
-    try {
-      const r = await queryDatabase(dbId)
-      result[key] = {
-        ok: true,
-        count: r.results.length,
-        propertyNames: r.results[0] ? Object.keys(r.results[0].properties) : [],
-        firstRow: r.results[0]
-          ? Object.fromEntries(Object.entries(r.results[0].properties).map(([k, v]) => [k, v.type]))
-          : null
-      }
-    } catch (err) {
-      result[key] = { ok: false, error: err.message, code: err.code }
-    }
-  }
-
-  res.json(result)
-})
 
 // Cache pour éviter trop d'appels Notion
 let cache = {

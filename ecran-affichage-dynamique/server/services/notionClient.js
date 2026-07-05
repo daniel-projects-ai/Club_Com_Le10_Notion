@@ -1,7 +1,7 @@
 // Client Notion utilisant le fetch natif de Node (pas de SDK)
 // Évite les problèmes de compatibilité SDK/Node (ERR_STREAM_PREMATURE_CLOSE)
 
-const NOTION_API_KEY = process.env.NOTION_API_KEY || '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'
+const NOTION_API_KEY = process.env.NOTION_API_KEY
 const NOTION_VERSION = '2022-06-28'
 
 // Nettoyer un ID Notion : extraire les 32 caractères hexadécimaux
