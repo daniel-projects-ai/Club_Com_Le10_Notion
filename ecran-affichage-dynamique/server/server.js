@@ -13,21 +13,11 @@ const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
-// Middleware CORS manuel
+// Middleware CORS manuel - autoriser toutes les origines (affichage public)
 app.use((req, res, next) => {
-  const origin = req.headers.origin
-  const allowedOrigins = [
-    'https://club-com-le10-notion.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ]
-
-  if (!origin || allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin || '*')
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    res.header('Access-Control-Allow-Credentials', 'false')
-  }
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200)
