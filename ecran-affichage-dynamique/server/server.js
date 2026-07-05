@@ -13,25 +13,29 @@ const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
-// Middleware CORS
-const allowedOrigins = [
-  'https://club-com-le10-notion.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173'
-]
+// Middleware CORS manuel
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  const allowedOrigins = [
+    'https://club-com-le10-notion.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ]
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: false,
-  optionsSuccessStatus: 200
-}))
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin || '*')
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.header('Access-Control-Allow-Credentials', 'false')
+  }
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200)
+  }
+
+  next()
+})
+
 app.use(express.json())
 
 // Store de modération (en mémoire pour commencer)
