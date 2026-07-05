@@ -8,6 +8,7 @@ export default function ScreenTV() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [fadeOut, setFadeOut] = useState(false)
   const [moderationState, setModerationState] = useState(null)
+  const [opportunities, setOpportunities] = useState([])
   const wsRef = useRef(null)
 
   const slides = [
@@ -15,6 +16,27 @@ export default function ScreenTV() {
     { id: 2, component: SlideStats, duration: 15 },
     { id: 3, component: SlideClubCom, duration: 20 }
   ]
+
+  // Charger les opportunités depuis l'API
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      try {
+        const API_URL = window.location.hostname === 'localhost'
+          ? 'http://localhost:5001'
+          : 'https://clubcomle10notion-production.up.railway.app'
+        const res = await fetch(`${API_URL}/api/notion/opportunities`)
+        const data = await res.json()
+        setOpportunities(data.data || mockData.opportunities)
+      } catch (err) {
+        console.error('❌ Erreur chargement opportunités:', err)
+        setOpportunities(mockData.opportunities)
+      }
+    }
+
+    fetchOpportunities()
+    const interval = setInterval(fetchOpportunities, 60000) // Rafraîchir toutes les 60s
+    return () => clearInterval(interval)
+  }, [])
 
   // Connecter au WebSocket pour recevoir les mises à jour de modération
   useEffect(() => {
@@ -59,7 +81,7 @@ export default function ScreenTV() {
   const CurrentSlideComponent = slides[currentSlide].component
 
   // Filtrer les opportunités visibles
-  const visibleOpportunities = mockData.opportunities.filter(opp => {
+  const visibleOpportunities = opportunities.filter(opp => {
     return moderationState?.opportunities?.[opp.id]?.visible !== false
   })
 
