@@ -10,21 +10,27 @@ export default function SlideStats({ data }) {
     opps.map(o => o.client).filter(c => c && c !== 'Non spécifié')
   ).size
 
-  const fmt = (n) => `${n.toLocaleString('fr-FR')}€`
+  const fmt = (n) => `${n.toLocaleString('fr-FR')} €`
 
   const stats = [
-    { label: 'Opportunités actives', value: opps.length, icon: '📈', color: 'from-purple-600 to-pink-600' },
-    { label: 'Portefeuille total', value: fmt(totalBudget), icon: '💰', color: 'from-green-600 to-emerald-600' },
-    { label: 'Budget moyen', value: fmt(avgBudget), icon: '🎯', color: 'from-blue-600 to-cyan-600' },
-    { label: 'Clients / structures', value: distinctClients, icon: '🏛️', color: 'from-orange-600 to-red-600' }
+    { label: 'Opportunités actives', value: opps.length, accent: '#efad29' },
+    { label: 'Portefeuille total', value: fmt(totalBudget), accent: '#6b7a2f' },
+    { label: 'Budget moyen', value: fmt(avgBudget), accent: '#b5432a' },
+    { label: 'Clients / structures', value: distinctClients, accent: '#0e424b' }
   ]
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-16 bg-gradient-to-b from-slate-900 to-slate-800">
-      {/* Titre */}
-      <div className="mb-12 text-center">
-        <h2 className="text-6xl font-bold text-white mb-2">📊 TABLEAU DE BORD</h2>
-        <p className="text-2xl text-blue-300">Indicateurs clés en temps réel</p>
+    <div className="w-full h-full flex flex-col items-center justify-center px-16 py-20">
+      {/* En-tête */}
+      <div className="mb-14 text-center">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <span className="h-px w-16 bg-gold/60" />
+          <p className="text-gold text-lg font-medium tracking-[0.32em] uppercase">
+            Indicateurs clés
+          </p>
+          <span className="h-px w-16 bg-gold/60" />
+        </div>
+        <h2 className="font-serif text-7xl font-semibold text-cream">Tableau de bord</h2>
       </div>
 
       {/* Grille de stats */}
@@ -32,23 +38,19 @@ export default function SlideStats({ data }) {
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            className={`bg-gradient-to-br ${stat.color} rounded-3xl p-10 shadow-2xl hover:scale-105 transition-transform duration-300`}
+            className="bg-petrol-light rounded-3xl p-10 shadow-2xl shadow-black/30 border-t-4"
+            style={{ borderTopColor: stat.accent }}
           >
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <p className="text-xl text-white/80 font-semibold mb-2">{stat.label}</p>
-                <p className="text-5xl font-black text-white">
-                  {stat.value}
-                </p>
-              </div>
-              <span className="text-5xl">{stat.icon}</span>
-            </div>
+            <p className="text-lg text-cream/70 font-medium mb-4 tracking-wide">{stat.label}</p>
+            <p className="font-serif text-6xl font-semibold text-cream tabular-nums">
+              {stat.value}
+            </p>
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="mt-12 text-center text-slate-400 text-lg">
+      <div className="mt-14 text-center text-cream/45 text-base tracking-wide">
         Données synchronisées en temps réel avec Notion
       </div>
     </div>

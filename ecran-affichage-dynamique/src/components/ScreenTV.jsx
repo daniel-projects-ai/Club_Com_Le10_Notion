@@ -81,36 +81,48 @@ export default function ScreenTV() {
   }
 
   return (
-    <div className="w-screen h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center overflow-hidden">
+    <div className="w-screen h-screen bg-petrol flex items-center justify-center overflow-hidden relative">
+      {/* Halo pétrole plus clair en haut à droite (rappel de la maquette) */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(130% 150% at 88% 0%, #083840 0%, #00252b 60%)' }}
+      />
+
       {/* Conteneur principal - sans fade pour éviter les flashs blancs */}
-      <div className="w-full h-full">
+      <div className="w-full h-full relative">
         <CurrentSlideComponent data={filteredData} />
       </div>
 
       {/* Indicateurs de slide */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
         {slides.map((slide, idx) => (
           <div
             key={slide.id}
-            className={`h-3 rounded-full transition-all duration-300 ${
-              idx === currentSlide
-                ? 'w-8 bg-blue-400'
-                : 'w-3 bg-slate-600'
+            className={`h-2 rounded-full transition-all duration-300 ${
+              idx === currentSlide ? 'w-8 bg-gold' : 'w-2 bg-petrol-lighter'
             }`}
           />
         ))}
       </div>
 
       {/* Logo/Branding en haut à gauche */}
-      <div className="fixed top-8 left-8 text-white">
-        <h1 className="text-3xl font-bold tracking-wider">MACAO</h1>
-        <p className="text-xs text-slate-400 mt-1">Club Com' Le 10</p>
+      <div className="fixed top-8 left-8 flex items-center gap-4 z-20">
+        <img
+          src="/le10-logo.png"
+          alt="LE 10 Coworking"
+          className="w-16 h-16 object-contain"
+          style={{ filter: 'drop-shadow(0 0 1px rgba(250,246,236,.9)) drop-shadow(0 0 12px rgba(250,246,236,.22))' }}
+        />
+        <div className="leading-none">
+          <h1 className="font-serif text-2xl font-semibold text-cream tracking-wide">LE 10</h1>
+          <p className="text-2xs text-cream/70 mt-1 tracking-[0.34em] uppercase">Coworking</p>
+        </div>
       </div>
 
       {/* Horloge en haut à droite */}
-      <div className="fixed top-8 right-8 text-white text-right">
-        <div id="clock" className="text-2xl font-mono font-bold">--:--</div>
-        <p className="text-xs text-slate-400 mt-1">Mise à jour auto</p>
+      <div className="fixed top-8 right-8 text-right z-20">
+        <div id="clock" className="text-2xl font-semibold text-cream tabular-nums tracking-wider">--:--</div>
+        <p className="text-2xs text-cream/60 mt-1 tracking-[0.2em] uppercase">Agen · en direct</p>
       </div>
     </div>
   )

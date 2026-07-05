@@ -85,24 +85,32 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-slate-900">
-        <div className="text-white text-2xl">⏳ Chargement...</div>
+      <div className="w-screen h-screen flex items-center justify-center bg-petrol">
+        <div className="text-cream text-2xl">⏳ Chargement...</div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+    <div className="h-screen overflow-y-auto bg-petrol p-8">
       <div className="max-w-7xl mx-auto pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl font-black text-white mb-2">📊 MODÉRATION</h1>
-            <p className="text-slate-400">Contrôlez l'Écran TV en temps réel</p>
+          <div className="flex items-center gap-4">
+            <img
+              src="/le10-logo.png"
+              alt="LE 10"
+              className="w-14 h-14 object-contain"
+              style={{ filter: 'drop-shadow(0 0 1px rgba(250,246,236,.8)) drop-shadow(0 0 10px rgba(250,246,236,.2))' }}
+            />
+            <div>
+              <h1 className="font-serif text-4xl font-semibold text-cream mb-1">Modération</h1>
+              <p className="text-cream/60">Contrôlez l'Écran TV en temps réel</p>
+            </div>
           </div>
           <div className="text-right space-y-2">
-            <p className="text-slate-300 text-sm">Dernière mise à jour:</p>
-            <p className="text-blue-400 font-mono mb-4">
+            <p className="text-cream/60 text-sm">Dernière mise à jour :</p>
+            <p className="text-gold font-mono mb-4 tabular-nums">
               {state?.lastUpdate ? new Date(state.lastUpdate).toLocaleTimeString() : '--:--'}
             </p>
             <button
@@ -110,7 +118,7 @@ export default function Dashboard() {
                 localStorage.removeItem('dashboardAuth')
                 setIsAuthenticated(false)
               }}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              className="bg-petrol-light hover:bg-petrol-lighter text-cream px-4 py-2 rounded-lg text-sm transition-colors border border-cream/10"
             >
               🚪 Déconnexion
             </button>
@@ -132,7 +140,7 @@ export default function Dashboard() {
 
           <button
             onClick={() => fetchData(true)}
-            className="rounded-2xl p-6 font-bold text-xl bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 shadow-lg shadow-blue-600/50"
+            className="rounded-2xl p-6 font-bold text-xl bg-gold hover:bg-gold-soft text-petrol transition-all duration-300 shadow-lg shadow-gold/30"
           >
             🔄 RAFRAÎCHIR
           </button>
@@ -142,15 +150,15 @@ export default function Dashboard() {
               await fetch(`${API_URL}/api/moderation/reset`, { method: 'POST' })
               fetchData(false)
             }}
-            className="rounded-2xl p-6 font-bold text-xl bg-slate-600 hover:bg-slate-700 text-white transition-all duration-300"
+            className="rounded-2xl p-6 font-bold text-xl bg-petrol-light hover:bg-petrol-lighter text-cream border border-cream/10 transition-all duration-300"
           >
             ⚙️ RÉINITIALISER
           </button>
         </div>
 
         {/* Liste des opportunités */}
-        <div className="bg-slate-700/50 rounded-2xl p-8 border border-slate-600">
-          <h2 className="text-2xl font-bold text-white mb-6">📌 Opportunités</h2>
+        <div className="bg-petrol-light rounded-2xl p-8 border border-cream/10">
+          <h2 className="font-serif text-2xl font-semibold text-cream mb-6">Opportunités</h2>
 
           <div className="space-y-4">
             {opportunities.map((opp, idx) => {
@@ -160,15 +168,15 @@ export default function Dashboard() {
                   key={opp.id}
                   className={`flex items-center justify-between rounded-lg p-6 border transition-all duration-300 ${
                     isVisible
-                      ? 'bg-slate-800 border-slate-600 hover:border-blue-400'
-                      : 'bg-slate-900 border-slate-700 opacity-60'
+                      ? 'bg-petrol border-cream/10 hover:border-gold/50'
+                      : 'bg-petrol/40 border-cream/5 opacity-60'
                   }`}
                 >
                   <div className="flex-1">
-                    <h3 className={`text-lg font-semibold mb-2 ${isVisible ? 'text-white' : 'text-slate-400'}`}>
+                    <h3 className={`text-lg font-semibold mb-2 ${isVisible ? 'text-cream' : 'text-cream/50'}`}>
                       {opp.name}
                     </h3>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-cream/55 text-sm">
                       {opp.client} • {opp.deadline} • {opp.budget}
                     </p>
                   </div>
@@ -189,35 +197,35 @@ export default function Dashboard() {
           </div>
 
           {opportunities.length === 0 && (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-cream/50">
               ℹ️ Aucune opportunité à afficher
             </div>
           )}
         </div>
 
         {/* Stats en direct */}
-        <div className="mt-8 bg-slate-700/50 rounded-2xl p-8 border border-slate-600">
-          <h2 className="text-2xl font-bold text-white mb-4">📈 État du système</h2>
+        <div className="mt-8 bg-petrol-light rounded-2xl p-8 border border-cream/10">
+          <h2 className="font-serif text-2xl font-semibold text-cream mb-4">État du système</h2>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-slate-800 rounded-lg p-4 text-center">
-              <p className="text-slate-400 text-sm mb-2">État</p>
-              <p className="text-2xl font-bold text-blue-400">
+            <div className="bg-petrol rounded-lg p-4 text-center border border-cream/5">
+              <p className="text-cream/55 text-sm mb-2">État</p>
+              <p className="text-2xl font-bold text-gold">
                 {state?.paused ? '⏸️ Pause' : '▶️ Direct'}
               </p>
             </div>
-            <div className="bg-slate-800 rounded-lg p-4 text-center">
-              <p className="text-slate-400 text-sm mb-2">Opportunités</p>
-              <p className="text-2xl font-bold text-green-400">{opportunities.length}</p>
+            <div className="bg-petrol rounded-lg p-4 text-center border border-cream/5">
+              <p className="text-cream/55 text-sm mb-2">Opportunités</p>
+              <p className="text-2xl font-bold text-cream tabular-nums">{opportunities.length}</p>
             </div>
-            <div className="bg-slate-800 rounded-lg p-4 text-center">
-              <p className="text-slate-400 text-sm mb-2">Affichées</p>
-              <p className="text-2xl font-bold text-purple-400">
+            <div className="bg-petrol rounded-lg p-4 text-center border border-cream/5">
+              <p className="text-cream/55 text-sm mb-2">Affichées</p>
+              <p className="text-2xl font-bold text-green-400 tabular-nums">
                 {opportunities.filter(o => state?.opportunities?.[o.id]?.visible !== false).length}
               </p>
             </div>
-            <div className="bg-slate-800 rounded-lg p-4 text-center">
-              <p className="text-slate-400 text-sm mb-2">Cachées</p>
-              <p className="text-2xl font-bold text-red-400">
+            <div className="bg-petrol rounded-lg p-4 text-center border border-cream/5">
+              <p className="text-cream/55 text-sm mb-2">Cachées</p>
+              <p className="text-2xl font-bold text-terra tabular-nums">
                 {opportunities.filter(o => state?.opportunities?.[o.id]?.visible === false).length}
               </p>
             </div>
