@@ -18,7 +18,9 @@ export default function ScreenTV() {
 
   // Connecter au WebSocket pour recevoir les mises à jour de modération
   useEffect(() => {
-    const wsUrl = `ws://${window.location.hostname}:5001`
+    const wsUrl = window.location.hostname === 'localhost'
+      ? `ws://localhost:5001`
+      : `wss://clubcomle10notion-production.up.railway.app`
     wsRef.current = new WebSocket(wsUrl)
 
     wsRef.current.onmessage = (event) => {
