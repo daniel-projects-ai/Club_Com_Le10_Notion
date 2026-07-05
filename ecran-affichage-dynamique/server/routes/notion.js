@@ -1,6 +1,5 @@
 import express from 'express'
-import { Client } from '@notionhq/client'
-import { getOpportunities, getDossiers, getStats, cleanNotionId } from '../services/notionClient.js'
+import { getOpportunities, getDossiers, getStats, cleanNotionId, queryDatabase } from '../services/notionClient.js'
 
 const router = express.Router()
 
@@ -13,11 +12,9 @@ router.get('/debug', async (req, res) => {
   result.env.dbOpportunities = cleanOpp || '(non défini)'
   result.env.dbDossiers = cleanDos || '(non défini)'
 
-  const notion = new Client({ auth: process.env.NOTION_API_KEY })
-
   for (const [key, dbId] of [['opportunities', cleanOpp], ['dossiers', cleanDos]]) {
     try {
-      const r = await notion.databases.query({ database_id: dbId })
+      const r = await queryDatabase(dbId)
       result[key] = {
         ok: true,
         count: r.results.length,

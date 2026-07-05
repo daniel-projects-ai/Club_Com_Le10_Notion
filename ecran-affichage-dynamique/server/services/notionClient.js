@@ -1,8 +1,8 @@
-import { Client } from '@notionhq/client'
+// Client Notion utilisant le fetch natif de Node (pas de SDK)
+// Évite les problèmes de compatibilité SDK/Node (ERR_STREAM_PREMATURE_CLOSE)
 
-const notion = new Client({
-  auth: process.env.NOTION_API_KEY || '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'
-})
+const NOTION_API_KEY = process.env.NOTION_API_KEY || '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'
+const NOTION_VERSION = '2022-06-28'
 
 // Nettoyer un ID Notion : extraire les 32 caractères hexadécimaux
 // (supprime les ?v=..., slugs, tirets, etc. collés depuis une URL)
@@ -18,6 +18,37 @@ const DATABASES = {
   dossiers: cleanNotionId(process.env.NOTION_DB_DOSSIERS || '380eb37e555980d486a3ed5c3fe5b950')
 }
 
+// Requête directe à l'API Notion via fetch natif, avec retry
+export async function queryDatabase(databaseId, body = {}, retries = 2) {
+  const url = `https://api.notion.com/v1/databases/${databaseId}/query`
+  let lastErr
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_API_KEY}`,
+          'Notion-Version': NOTION_VERSION,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}`)
+      }
+      return data
+    } catch (err) {
+      lastErr = err
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 400 * (attempt + 1)))
+      }
+    }
+  }
+  throw lastErr
+}
+
 // Helpers robustes pour extraire une propriété quel que soit son type
 function extractText(prop) {
   if (!prop) return null
@@ -25,11 +56,13 @@ function extractText(prop) {
   if (prop.rich_text?.length) return prop.rich_text.map(t => t.plain_text).join('')
   if (prop.select?.name) return prop.select.name
   if (prop.multi_select?.length) return prop.multi_select.map(s => s.name).join(', ')
+  if (prop.status?.name) return prop.status.name
   if (prop.date?.start) return prop.date.start
   if (typeof prop.number === 'number') return String(prop.number)
   if (prop.url) return prop.url
   if (prop.formula?.string) return prop.formula.string
   if (prop.formula?.number != null) return String(prop.formula.number)
+  if (prop.rollup?.array?.length) return prop.rollup.array.map(extractText).filter(Boolean).join(', ')
   return null
 }
 
@@ -47,9 +80,7 @@ function findProp(properties, candidates) {
 // Récupérer les opportunités
 export async function getOpportunities() {
   try {
-    const response = await notion.databases.query({
-      database_id: DATABASES.opportunities
-    })
+    const response = await queryDatabase(DATABASES.opportunities)
 
     return response.results.map(page => {
       const p = page.properties
@@ -79,22 +110,16 @@ export async function getOpportunities() {
 // Récupérer les dossiers de réponse
 export async function getDossiers() {
   try {
-    const response = await notion.databases.query({
-      database_id: DATABASES.dossiers,
-      filter: {
-        property: 'Statut',
-        select: {
-          equals: 'En préparation'
-        }
+    const response = await queryDatabase(DATABASES.dossiers)
+
+    return response.results.map(page => {
+      const p = page.properties
+      return {
+        id: page.id,
+        name: extractText(findProp(p, ['nom du dossier', 'nom', 'titre'])) || 'Sans titre',
+        status: extractText(findProp(p, ['statut', 'status', 'etat'])) || 'Inconnu'
       }
     })
-
-    return response.results.map(page => ({
-      id: page.id,
-      name: page.properties['Nom du dossier']?.title?.[0]?.plain_text || 'Sans titre',
-      opportunity: page.properties['Opportunité liée']?.relation?.[0]?.id || null,
-      status: page.properties['Statut']?.select?.name || 'Inconnu'
-    }))
   } catch (err) {
     console.error('❌ Erreur Notion (Dossiers):', err.message)
     return []
