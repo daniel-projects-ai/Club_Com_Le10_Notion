@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
-import useWebSocket from '../hooks/useWebSocket'
 import { mockData } from '../mockData'
 import Login from './Login'
+
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:5001'
+  : 'https://clubcomle10notion-production.up.railway.app'
 
 export default function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -10,24 +13,20 @@ export default function Dashboard() {
   const [state, setState] = useState(null)
   const [opportunities, setOpportunities] = useState([])
   const [loading, setLoading] = useState(true)
-  const { sendMessage } = useWebSocket(setState)
 
-  if (!isAuthenticated) {
-    return <Login onLogin={setIsAuthenticated} />
-  }
-
+  // Tous les hooks doivent être appelés avant tout return conditionnel
   useEffect(() => {
-    fetchData()
+    if (!isAuthenticated) return
 
-    // Rafraîchir seulement toutes les 2 minutes (éviter les flashs)
-    const interval = setInterval(fetchData, 120000)
+    fetchData(true)
+    // Rafraîchir en silence toutes les 5s pour rester synchronisé
+    const interval = setInterval(() => fetchData(false), 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isAuthenticated])
 
-  async function fetchData() {
+  async function fetchData(isInitial = false) {
     try {
-      setLoading(true)
-      const API_URL = 'https://clubcomle10notion-production.up.railway.app'
+      if (isInitial) setLoading(true)
       const [oppRes, stateRes] = await Promise.all([
         fetch(`${API_URL}/api/notion/opportunities`),
         fetch(`${API_URL}/api/moderation/state`)
@@ -42,23 +41,21 @@ export default function Dashboard() {
 
       // Si l'API retourne une liste vide, utiliser les mockData
       const oppsToUse = (oppData.data && oppData.data.length > 0) ? oppData.data : mockData.opportunities
-      console.log('📊 Données chargées:', oppsToUse, '(source:', oppData.data && oppData.data.length > 0 ? 'Notion' : 'mockData', ')')
       setOpportunities(oppsToUse)
       setState(stateData)
     } catch (err) {
       console.error('❌ Erreur chargement:', err)
-      // Utiliser les mockData en cas d'erreur Notion
-      console.log('📊 Utilisation des données de test (mockData)')
-      setOpportunities(mockData.opportunities)
-      setState({ paused: false, opportunities: {}, lastUpdate: new Date() })
+      if (isInitial) {
+        setOpportunities(mockData.opportunities)
+        setState({ paused: false, opportunities: {}, lastUpdate: new Date() })
+      }
     } finally {
-      setLoading(false)
+      if (isInitial) setLoading(false)
     }
   }
 
   const toggleOpportunity = async (id) => {
     try {
-      const API_URL = 'https://clubcomle10notion-production.up.railway.app'
       const res = await fetch(`${API_URL}/api/moderation/toggle-opportunity`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,7 +65,6 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json()
         setState(data.state)
-        console.log('✅ Toggle success:', id, data.state)
       }
     } catch (err) {
       console.error('❌ Erreur toggle:', err)
@@ -76,11 +72,15 @@ export default function Dashboard() {
   }
 
   const togglePause = async () => {
-    const API_URL = 'https://clubcomle10notion-production.up.railway.app'
     await fetch(`${API_URL}/api/moderation/pause`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
+    fetchData(false)
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={setIsAuthenticated} />
   }
 
   if (loading) {
@@ -131,7 +131,7 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={fetchData}
+            onClick={() => fetchData(true)}
             className="rounded-2xl p-6 font-bold text-xl bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 shadow-lg shadow-blue-600/50"
           >
             🔄 RAFRAÎCHIR
@@ -139,9 +139,8 @@ export default function Dashboard() {
 
           <button
             onClick={async () => {
-              const API_URL = 'https://clubcomle10notion-production.up.railway.app'
               await fetch(`${API_URL}/api/moderation/reset`, { method: 'POST' })
-              fetchData()
+              fetchData(false)
             }}
             className="rounded-2xl p-6 font-bold text-xl bg-slate-600 hover:bg-slate-700 text-white transition-all duration-300"
           >
