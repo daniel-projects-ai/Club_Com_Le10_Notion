@@ -150,9 +150,17 @@ export default function ScreenTV() {
       </div>
 
       {/* Horloge en haut à droite */}
-      <div className="fixed top-8 right-8 text-right z-20">
-        <div id="clock" className="text-2xl font-semibold text-cream tabular-nums tracking-wider">--:--</div>
-        <p className="text-2xs text-cream/60 mt-1 tracking-[0.2em] uppercase">Agen · en direct</p>
+      <div className="fixed top-7 right-8 text-right z-20">
+        <div
+          id="clock"
+          className="text-6xl font-bold text-cream tabular-nums tracking-tight leading-none"
+          style={{ textShadow: '0 2px 18px rgba(0,0,0,.5)' }}
+        >
+          --:--
+        </div>
+        <p className="text-xs text-gold/90 mt-2 tracking-[0.28em] uppercase font-semibold">
+          Agen · en direct
+        </p>
       </div>
 
       {/* Bouton plein écran - masque la barre d'URL sur la TV.

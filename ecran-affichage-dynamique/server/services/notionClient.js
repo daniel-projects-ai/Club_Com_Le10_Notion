@@ -66,41 +66,75 @@ function extractText(prop) {
   return null
 }
 
-// Trouver la 1ère propriété correspondant à un des noms (insensible à la casse/accents)
+// Normalise : minuscules, sans accents, apostrophes courbes -> droites
+function norm(s) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u2018\u2019\u02BC]/g, "'")
+    .trim()
+}
+
+// Trouver une propriete par nom.
+// Correspondance EXACTE d'abord : indispensable car plusieurs colonnes se
+// chevauchent ("Statut" vs "Statut du dossier de reponse",
+// "Type d'acheteur" vs "Type d'opportunite").
 function findProp(properties, candidates) {
-  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const keys = Object.keys(properties)
   for (const cand of candidates) {
-    const match = keys.find(k => norm(k).includes(norm(cand)))
-    if (match) return properties[match]
+    const exact = keys.find(k => norm(k) === norm(cand))
+    if (exact) return properties[exact]
+  }
+  for (const cand of candidates) {
+    const partial = keys.find(k => norm(k).includes(norm(cand)))
+    if (partial) return properties[partial]
   }
   return null
 }
 
-// Récupérer les opportunités
+// Statuts à ne jamais afficher sur l'écran public
+const STATUTS_EXCLUS = ['Perdu', 'Archivé', 'NO GO']
+
+// La base contient des lignes d'alerte email brutes ("Alerte France Marchés - ...")
+// qui ne sont pas de vraies opportunités : pas d'acheteur, pas d'objet.
+// Une vraie opportunité a un acheteur/client renseigné.
+function estVraieOpportunite(o) {
+  if (/^alerte\b/i.test(o.name)) return false
+  if (!o.client) return false
+  if (STATUTS_EXCLUS.includes(o.status)) return false
+  return true
+}
+
+// Récupérer les opportunités (seulement les vraies, exploitables)
 export async function getOpportunities() {
   try {
     const response = await queryDatabase(DATABASES.opportunities)
 
-    return response.results.map(page => {
+    const toutes = response.results.map(page => {
       const p = page.properties
+      const budgetBrut = findProp(p, ['budget estime', 'budget'])
+      const budget = typeof budgetBrut?.number === 'number' ? budgetBrut.number : null
+
       return {
         id: page.id,
-        name: extractText(findProp(p, ['nom de l', 'nom', 'titre', 'opportunit'])) || 'Sans titre',
-        client: extractText(findProp(p, ['acheteur', 'client'])) || 'Non spécifié',
-        deadline: extractText(findProp(p, ['date limite', 'deadline', 'date de detection', 'date'])) || 'N/A',
-        budget: (() => {
-          const b = extractText(findProp(p, ['budget']))
-          if (!b) return 'À définir'
-          return b.includes('€') ? b : `${b}€`
-        })(),
-        status: extractText(findProp(p, ['statut', 'status', 'etat'])) || 'Ouvert',
-        source: extractText(findProp(p, ['source'])) || '',
-        link: extractText(findProp(p, ['lien', 'annonce', 'url'])) || '',
-        type: extractText(findProp(p, ['mode de reponse', 'mode', 'type'])) || 'Standard',
+        name: extractText(findProp(p, ["nom de l'opportunite", 'nom de l', 'nom'])) || 'Sans titre',
+        client: extractText(findProp(p, ['acheteur / client', 'acheteur', 'client'])) || null,
+        objet: extractText(findProp(p, ['objet'])) || null,
+        deadline: findProp(p, ['date limite'])?.date?.start || null, // ISO ou null
+        budget, // nombre ou null — le formatage se fait côté affichage
+        status: extractText(findProp(p, ['statut'])) || null, // vrai statut Notion, pas de valeur inventée
+        territoire: extractText(findProp(p, ['territoire'])) || null,
+        source: extractText(findProp(p, ['source'])) || null,
+        link: findProp(p, ['lien annonce'])?.url || null,
+        type: extractText(findProp(p, ["type d'opportunite"])) || null,
         icon: '🎯'
       }
     })
+
+    const vraies = toutes.filter(estVraieOpportunite)
+    console.log(`📊 Notion : ${toutes.length} lignes → ${vraies.length} vraies opportunités`)
+    return vraies
   } catch (err) {
     console.error('❌ Erreur Notion (Opportunités):', err.message)
     return []
@@ -126,21 +160,18 @@ export async function getDossiers() {
   }
 }
 
-// Obtenir les stats
+// Obtenir les stats (calculées sur les vraies opportunités)
 export async function getStats() {
   try {
     const opportunities = await getOpportunities()
-    const totalBudget = opportunities.reduce((sum, opp) => {
-      const num = parseInt(opp.budget) || 0
-      return sum + num
-    }, 0)
+    const avecBudget = opportunities.filter(o => typeof o.budget === 'number')
+    const totalBudget = avecBudget.reduce((sum, o) => sum + o.budget, 0)
 
     return {
-      portfolio: `${totalBudget.toLocaleString('fr-FR')}€`,
-      successRate: '68%',
       activeOpportunities: opportunities.length,
-      freelancesEngaged: 8,
-      monthlyTarget: 300000
+      totalBudget,
+      averageBudget: avecBudget.length ? Math.round(totalBudget / avecBudget.length) : 0,
+      distinctClients: new Set(opportunities.map(o => o.client).filter(Boolean)).size
     }
   } catch (err) {
     console.error('❌ Erreur calcul stats:', err.message)

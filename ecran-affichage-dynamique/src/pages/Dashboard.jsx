@@ -177,7 +177,18 @@ export default function Dashboard() {
                       {opp.name}
                     </h3>
                     <p className="text-cream/55 text-sm">
-                      {opp.client} • {opp.deadline} • {opp.budget}
+                      {[
+                        opp.client,
+                        opp.status,
+                        typeof opp.budget === 'number'
+                          ? `${opp.budget.toLocaleString('fr-FR')} €`
+                          : null,
+                        opp.deadline
+                          ? new Date(opp.deadline).toLocaleDateString('fr-FR')
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')}
                     </p>
                   </div>
 
