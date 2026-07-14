@@ -9,12 +9,42 @@ export default function ScreenTV() {
   const [fadeOut, setFadeOut] = useState(false)
   const [moderationState, setModerationState] = useState(null)
   const [opportunities, setOpportunities] = useState([])
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const slides = [
     { id: 1, component: SlideOpportunities, duration: 20 },
     { id: 2, component: SlideStats, duration: 15 },
     { id: 3, component: SlideClubCom, duration: 20 }
   ]
+
+  // Plein écran (masque la barre d'URL du navigateur de la TV)
+  // L'API Fullscreen exige un clic utilisateur : d'où le bouton.
+  const enterFullscreen = () => {
+    const el = document.documentElement
+    const request =
+      el.requestFullscreen ||
+      el.webkitRequestFullscreen ||
+      el.mozRequestFullScreen ||
+      el.msRequestFullscreen
+    if (request) {
+      const result = request.call(el)
+      if (result && typeof result.catch === 'function') {
+        result.catch((err) => console.error('Plein écran refusé :', err))
+      }
+    }
+  }
+
+  useEffect(() => {
+    const onChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    document.addEventListener('webkitfullscreenchange', onChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      document.removeEventListener('webkitfullscreenchange', onChange)
+    }
+  }, [])
 
   // Charger les opportunités depuis l'API
   useEffect(() => {
@@ -124,6 +154,17 @@ export default function ScreenTV() {
         <div id="clock" className="text-2xl font-semibold text-cream tabular-nums tracking-wider">--:--</div>
         <p className="text-2xs text-cream/60 mt-1 tracking-[0.2em] uppercase">Agen · en direct</p>
       </div>
+
+      {/* Bouton plein écran - masque la barre d'URL sur la TV.
+          Disparaît une fois le plein écran actif. */}
+      {!isFullscreen && (
+        <button
+          onClick={enterFullscreen}
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-3 rounded-xl bg-gold px-6 py-4 text-lg font-bold text-petrol shadow-lg shadow-black/40 transition-colors hover:bg-gold-soft focus:outline-none focus:ring-4 focus:ring-cream/60"
+        >
+          ⛶ Plein écran
+        </button>
+      )}
     </div>
   )
 }
