@@ -1,0 +1,256 @@
+<style>
+  :root{
+    --petrol:#00252b; --petrol2:#0a343c; --gold:#c98a12; --gold-bright:#efad29;
+    --terra:#b5432a; --olive:#6b7a2f; --cream:#faf6ec; --card:#ffffff;
+    --ink:#00252b; --muted:#5c6b6b; --line:#e5dcc6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --cream:#071f24; --card:#0a343c; --ink:#faf6ec; --muted:#9db2b2; --line:#14424b; --gold:#efad29; }
+  }
+  :root[data-theme="light"]{ --cream:#faf6ec; --card:#fff; --ink:#00252b; --muted:#5c6b6b; --line:#e5dcc6; --gold:#c98a12; }
+  :root[data-theme="dark"]{ --cream:#071f24; --card:#0a343c; --ink:#faf6ec; --muted:#9db2b2; --line:#14424b; --gold:#efad29; }
+
+  *{box-sizing:border-box}
+  .doc{
+    max-width:1100px; margin:0 auto; padding:48px 24px 80px;
+    background:var(--cream); color:var(--ink);
+    font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.55;
+  }
+  .serif{font-family:Lora,Georgia,"Times New Roman",serif}
+  .eyebrow{display:flex;align-items:center;gap:12px;color:var(--gold);font-weight:600;
+    letter-spacing:.28em;text-transform:uppercase;font-size:12px;margin-bottom:14px}
+  .eyebrow::before{content:"";height:1px;width:44px;background:var(--gold)}
+  h1{font-family:Lora,Georgia,serif;font-size:clamp(30px,5vw,46px);font-weight:600;
+    margin:0 0 10px;line-height:1.05;text-wrap:balance}
+  .lede{color:var(--muted);font-size:18px;max-width:70ch;margin:0 0 12px}
+  .meta{color:var(--muted);font-size:13px;letter-spacing:.02em;margin-bottom:40px}
+  h2{font-family:Lora,Georgia,serif;font-size:26px;font-weight:600;margin:52px 0 18px;
+    padding-bottom:10px;border-bottom:2px solid var(--line)}
+
+  .diagram{background:var(--petrol);border-radius:18px;padding:26px;overflow-x:auto;
+    box-shadow:0 18px 50px rgba(0,37,43,.22)}
+  .diagram .mermaid{min-width:640px;text-align:center}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:16px;font-size:13px;color:var(--muted)}
+  .legend b{color:var(--ink)}
+  .chip{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+  .table-card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px;border-top:4px solid var(--accent,var(--gold))}
+  .table-card h3{font-family:Lora,Georgia,serif;font-size:20px;font-weight:600;margin:0 0 4px;
+    display:flex;align-items:center;gap:10px}
+  .table-card .role{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .fields{list-style:none;margin:0;padding:0;font-size:14px}
+  .fields li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
+  .fields li:first-child{border-top:0}
+  .fields .fname{font-weight:500}
+  .fields .ftype{color:var(--muted);font-size:12px;white-space:nowrap}
+  .ia{color:var(--gold);font-weight:700;font-size:11px;letter-spacing:.08em}
+  .src{display:inline-block;margin-top:12px;font-size:12px;color:var(--muted);
+    background:color-mix(in srgb,var(--gold) 16%,transparent);padding:4px 10px;border-radius:999px}
+
+  ol.flow{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:14px}
+  ol.flow li{position:relative;padding-left:52px;min-height:34px;display:flex;align-items:center}
+  ol.flow li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;
+    width:34px;height:34px;border-radius:50%;background:var(--petrol);color:var(--cream);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Lora,serif}
+  ol.flow b{color:var(--ink)}
+  ol.flow .muted{color:var(--muted)}
+
+  .roles{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:640px){.roles{grid-template-columns:1fr}}
+  .role-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .role-box h3{font-family:Lora,serif;font-size:19px;margin:0 0 8px;display:flex;gap:9px;align-items:center}
+  .role-box ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .role-box.macao{border-top:4px solid var(--terra)}
+  .role-box.cw{border-top:4px solid var(--olive)}
+
+  footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--line);
+    color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+
+<article class="doc">
+  <div class="eyebrow">Plateforme Coworkers · Livrable 1</div>
+  <h1>Schéma de base de données</h1>
+  <p class="lede">Architecture de la base Airtable qui reliera les opportunités détectées par Macao à la communauté de coworkers du 10.</p>
+  <p class="meta">LE 10 Coworking × Agence Macao — v1, 15 juillet 2026 — Stack : Airtable · Jotform · Airtable AI</p>
+
+  <h2>Diagramme relationnel</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#0e424b','primaryTextColor':'#faf6ec','primaryBorderColor':'#efad29','lineColor':'#efad29','tertiaryColor':'#0a343c','fontSize':'14px','fontFamily':'Work Sans, system-ui, sans-serif'}}}%%
+erDiagram
+    OPPORTUNITES ||--o{ POSITIONNEMENTS : "reçoit"
+    COWORKERS    ||--o{ POSITIONNEMENTS : "crée"
+    OPPORTUNITES ||--o{ COMMENTAIRES   : "porte"
+    COWORKERS    ||--o{ COMMENTAIRES   : "écrit"
+    OPPORTUNITES }o--o{ METIERS        : "requiert"
+    COWORKERS    }o--o{ METIERS        : "maîtrise"
+    OPPORTUNITES {
+        text Nom
+        longtext Objet
+        select Statut
+        number Budget_estime
+        date Date_limite
+        longtext Resume_IA
+        number Score
+    }
+    COWORKERS {
+        text Nom_complet
+        email Email
+        select Disponibilite
+        select Role
+        select Statut
+    }
+    METIERS {
+        text Metier
+        select Categorie
+    }
+    POSITIONNEMENTS {
+        link Coworker
+        link Opportunite
+        select Statut
+        date Date
+    }
+    COMMENTAIRES {
+        link Opportunite
+        link Auteur
+        longtext Message
+    }
+    CONTACTS {
+        text Nom
+        email Email
+        select Type_demande
+        select Statut
+    }
+    </pre>
+  </div>
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:var(--gold-bright)"></span> <b>Métiers</b> = pivot du matching IA (Opportunités ↔ Coworkers)</span>
+    <span class="chip">||—o&lt; = un-à-plusieurs</span>
+    <span class="chip">&gt;o—o&lt; = plusieurs-à-plusieurs</span>
+    <span class="chip"><span class="ia">IA</span> Résumé, Score, Métiers &amp; Coworkers suggérés = remplis par Airtable AI</span>
+  </div>
+
+  <h2>Les 6 tables</h2>
+  <div class="grid">
+    <div class="table-card" style="--accent:var(--gold-bright)">
+      <h3>1 · Opportunités</h3>
+      <p class="role">Cœur du système — appels d'offres &amp; projets</p>
+      <ul class="fields">
+        <li><span class="fname">Nom</span><span class="ftype">texte · principal</span></li>
+        <li><span class="fname">Objet</span><span class="ftype">texte long</span></li>
+        <li><span class="fname">Acheteur / client</span><span class="ftype">texte</span></li>
+        <li><span class="fname">Type · Source · Territoire</span><span class="ftype">listes</span></li>
+        <li><span class="fname">Budget estimé</span><span class="ftype">nombre €</span></li>
+        <li><span class="fname">Date limite</span><span class="ftype">date</span></li>
+        <li><span class="fname">Statut</span><span class="ftype">liste</span></li>
+        <li><span class="fname">Résumé IA · Score <span class="ia">IA</span></span><span class="ftype">texte · nombre</span></li>
+        <li><span class="fname">Métiers · Coworkers suggérés <span class="ia">IA</span></span><span class="ftype">liens</span></li>
+      </ul>
+      <span class="src">← Macao (import Notion + saisie)</span>
+    </div>
+
+    <div class="table-card" style="--accent:var(--olive)">
+      <h3>2 · Coworkers</h3>
+      <p class="role">Les membres du 10</p>
+      <ul class="fields">
+        <li><span class="fname">Prénom · Nom</span><span class="ftype">texte</span></li>
+        <li><span class="fname">Email</span><span class="ftype">email · clé</span></li>
+        <li><span class="fname">Bio · Portfolio · Photo</span><span class="ftype">divers</span></li>
+        <li><span class="fname">Métiers / compétences</span><span class="ftype">lien</span></li>
+        <li><span class="fname">Disponibilité</span><span class="ftype">liste</span></li>
+        <li><span class="fname">Statut</span><span class="ftype">En attente / Actif</span></li>
+        <li><span class="fname">Rôle</span><span class="ftype">Coworker / Macao</span></li>
+      </ul>
+      <span class="src">← Jotform (inscription)</span>
+    </div>
+
+    <div class="table-card" style="--accent:var(--terra)">
+      <h3>3 · Métiers / Compétences</h3>
+      <p class="role">Référentiel — pivot du matching</p>
+      <ul class="fields">
+        <li><span class="fname">Métier</span><span class="ftype">texte · principal</span></li>
+        <li><span class="fname">Catégorie</span><span class="ftype">liste</span></li>
+        <li><span class="fname">Opportunités</span><span class="ftype">lien</span></li>
+        <li><span class="fname">Coworkers</span><span class="ftype">lien</span></li>
+      </ul>
+      <span class="src">← Macao (référentiel fixe)</span>
+    </div>
+
+    <div class="table-card" style="--accent:var(--gold-bright)">
+      <h3>4 · Positionnements</h3>
+      <p class="role">Le « ça m'intéresse »</p>
+      <ul class="fields">
+        <li><span class="fname">Coworker</span><span class="ftype">lien</span></li>
+        <li><span class="fname">Opportunité</span><span class="ftype">lien</span></li>
+        <li><span class="fname">Statut</span><span class="ftype">Intéressé / Retenu</span></li>
+        <li><span class="fname">Date</span><span class="ftype">auto</span></li>
+        <li><span class="fname">Note Macao</span><span class="ftype">texte long</span></li>
+      </ul>
+      <span class="src">← Interface (1 clic)</span>
+    </div>
+
+    <div class="table-card" style="--accent:var(--olive)">
+      <h3>5 · Commentaires</h3>
+      <p class="role">Fil d'échange par opportunité</p>
+      <ul class="fields">
+        <li><span class="fname">Opportunité</span><span class="ftype">lien</span></li>
+        <li><span class="fname">Auteur</span><span class="ftype">lien → Coworker</span></li>
+        <li><span class="fname">Message</span><span class="ftype">texte long</span></li>
+        <li><span class="fname">Date</span><span class="ftype">auto</span></li>
+      </ul>
+      <span class="src">← Interface</span>
+    </div>
+
+    <div class="table-card" style="--accent:var(--terra)">
+      <h3>6 · Contacts / Demandes</h3>
+      <p class="role">Messages externes</p>
+      <ul class="fields">
+        <li><span class="fname">Nom · Email</span><span class="ftype">texte · email</span></li>
+        <li><span class="fname">Type de demande</span><span class="ftype">liste</span></li>
+        <li><span class="fname">Message</span><span class="ftype">texte long</span></li>
+        <li><span class="fname">Statut de traitement</span><span class="ftype">liste</span></li>
+      </ul>
+      <span class="src">← Jotform (contact)</span>
+    </div>
+  </div>
+
+  <h2>Flux de données</h2>
+  <ol class="flow">
+    <li><b>Inscription</b> — le coworker remplit le Jotform → table Coworkers, Macao valide.</li>
+    <li><b>Nouvelle opportunité</b> — Macao la saisit → <b>l'IA</b> remplit résumé, métiers, score.</li>
+    <li><b>Matching</b> — <b>l'IA</b> suggère les coworkers dont les métiers correspondent.</li>
+    <li><b>Interaction</b> — le coworker clique « ça m'intéresse » et commente dans l'interface.</li>
+    <li><b>Pilotage</b> — Macao suit les positionnements et fait avancer le statut.</li>
+    <li><b>Contact externe</b> — un prospect écrit via le Jotform → table Contacts.</li>
+  </ol>
+
+  <h2>Accès par rôle</h2>
+  <div class="roles">
+    <div class="role-box macao">
+      <h3>🛠️ Macao (admin)</h3>
+      <ul>
+        <li>Gestion complète des opportunités &amp; statuts</li>
+        <li>Vue des positionnements &amp; validation des inscriptions</li>
+        <li>Traitement des contacts, déclenchement de l'IA</li>
+      </ul>
+    </div>
+    <div class="role-box cw">
+      <h3>👥 Coworkers</h3>
+      <ul>
+        <li>Consultation des opportunités visibles</li>
+        <li>« Ça m'intéresse » &amp; commentaires</li>
+        <li>Annuaire des coworkers — lecture seule sur les données Macao</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <span>LE 10 Coworking × Agence Macao — Schéma de base de données v1</span>
+    <span>Phase 2 : Écran TV rebranché sur Airtable · IA de qualification · assistant conversationnel</span>
+  </footer>
+</article>
