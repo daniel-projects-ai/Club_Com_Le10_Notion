@@ -40,14 +40,28 @@ Connexion native Jotform → Airtable **active et testée** (2026-07-16).
 
 Base, tables, champs, relations, données, formulaires, interfaces (publiées), enrichissement IA initial des 7 opportunités.
 
+## 🤖 Agent IA — Léa (Jotform AI Agent)
+
+Airtable AI nécessite des crédits (plan payant) ; le plan Jotform inclut 5 agents IA. Le livrable acceptant « agent IA intégré **au formulaire** ou à la base », l'agent a été construit côté Jotform.
+
+- **Nom** : Léa — Assistante d'accueil du Club Com' Le 10
+- **Langue** : français ; ton chaleureux, vouvoiement
+- **Connaissance** : présentation du Club + liste des 15 métiers avec correspondances + crawl de `le10.club`
+- **Garde-fous** (Chat Guidelines) : ne jamais inventer de métier hors des 15 ; ne jamais évoquer d'opportunités précises (elle n'y a pas accès) ; ne jamais promettre l'adhésion ; rappel RGPD
+- **Formulaire relié** : Rejoindre le Club Com' Le 10 → Airtable
+
+**Chaîne validée de bout en bout le 2026-07-16 : conversation Léa → Jotform → Airtable, métiers compris.**
+
+### Pièges rencontrés (à retenir)
+- Le consentement RGPD était un **widget « Terms & Conditions »** (iframe) : impossible à cocher en conversation → bouclait à l'infini et bloquait l'envoi. Remplacé par une **case à cocher native** (option courte « J'accepte »). Widget masqué et rendu non obligatoire.
+- Les métiers ne peuvent pas être mappés vers un champ **texte** ni vers un champ **lien** : Jotform grise ces options. Il faut un champ **sélection multiple** aux libellés strictement identiques → champ `Métiers déclarés` (fldSDAZRX6aovHyef).
+- Le champ texte `Métiers déclarés (formulaire)` est devenu inutile (à supprimer manuellement).
+
 ## ⚠️ Étapes restantes (interface graphique uniquement)
 
-L'API Airtable n'expose ni les **champs IA** ni les **automatisations** ; l'API Jotform n'expose pas les **intégrations**. Ces trois points se règlent dans les éditeurs.
+L'API Airtable n'expose ni les champs IA ni les automatisations. Ces points se règlent dans les éditeurs.
 
-### 1. Mapping Jotform manquant (30 s)
-Formulaire d'inscription → mapper **Métiers / compétences** (Jotform) vers **Métiers déclarés (formulaire)** (Airtable, champ texte). Le champ `Métiers / compétences` est un lien vers une table : Jotform ne peut pas l'alimenter directement. Le lien se fait ensuite à la validation de l'inscription.
-
-### 2. Accès par rôle
+### 1. Accès par rôle
 - Partager l'interface **Espace Coworkers** avec les coworkers → permission *Commenter / limitée*
 - Garder **Pilotage Macao** réservée au groupe Macao → *Éditeur*
 
