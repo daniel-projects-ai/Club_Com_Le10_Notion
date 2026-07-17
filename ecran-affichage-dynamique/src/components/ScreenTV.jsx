@@ -53,7 +53,7 @@ export default function ScreenTV() {
         const API_URL = window.location.hostname === 'localhost'
           ? 'http://localhost:5001'
           : 'https://clubcomle10notion-production.up.railway.app'
-        const res = await fetch(`${API_URL}/api/notion/opportunities`)
+        const res = await fetch(`${API_URL}/api/opportunities`)
         const data = await res.json()
         setOpportunities(data.data || mockData.opportunities)
       } catch (err) {

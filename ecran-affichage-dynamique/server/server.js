@@ -3,7 +3,7 @@ import cors from 'cors'
 import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
 import dotenv from 'dotenv'
-import notionRoutes from './routes/notion.js'
+import opportunitiesRoutes from './routes/opportunities.js'
 import moderationRoutes from './routes/moderation.js'
 
 // Charger les variables d'environnement
@@ -88,7 +88,10 @@ function broadcastUpdate(message) {
 }
 
 // Routes
-app.use('/api/notion', notionRoutes)
+app.use('/api/opportunities', opportunitiesRoutes)
+// Alias legacy : évite que la TV affiche les données de secours pendant que
+// Vercel et Railway se redéploient. Supprimable une fois le front à jour.
+app.use('/api/notion/opportunities', opportunitiesRoutes)
 app.use('/api/moderation', moderationRoutes(moderationState, broadcastUpdate))
 
 // Health check

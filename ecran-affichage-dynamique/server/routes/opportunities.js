@@ -1,26 +1,26 @@
 import express from 'express'
-import { getOpportunities, getDossiers, getStats } from '../services/notionClient.js'
+import { getOpportunities, getStats } from '../services/airtableClient.js'
 
 const router = express.Router()
 
-// Cache pour éviter trop d'appels Notion
+// Cache court : la case « Visible sur écran » d'Airtable doit se refléter
+// rapidement sur la TV, tout en évitant de marteler l'API.
 let cache = {
   opportunities: null,
-  dossiers: null,
   stats: null,
   lastUpdate: null
 }
 
-const CACHE_DURATION = 30 * 60 * 1000 // 30 minutes
+const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
 
 function isCacheValid() {
   return cache.lastUpdate && Date.now() - cache.lastUpdate < CACHE_DURATION
 }
 
-// GET /api/notion/opportunities
-router.get('/opportunities', async (req, res) => {
+// GET /api/opportunities
+router.get('/', async (req, res) => {
   try {
-    if (isCacheValid()) {
+    if (isCacheValid() && cache.opportunities) {
       return res.json({ data: cache.opportunities, source: 'cache' })
     }
 
@@ -28,35 +28,17 @@ router.get('/opportunities', async (req, res) => {
     cache.opportunities = opportunities
     cache.lastUpdate = Date.now()
 
-    res.json({ data: opportunities, source: 'notion' })
+    res.json({ data: opportunities, source: 'airtable' })
   } catch (err) {
     console.error('❌ Erreur route opportunités:', err)
     res.status(500).json({ error: 'Erreur lors de la récupération des opportunités' })
   }
 })
 
-// GET /api/notion/dossiers
-router.get('/dossiers', async (req, res) => {
-  try {
-    if (isCacheValid()) {
-      return res.json({ data: cache.dossiers, source: 'cache' })
-    }
-
-    const dossiers = await getDossiers()
-    cache.dossiers = dossiers
-    cache.lastUpdate = Date.now()
-
-    res.json({ data: dossiers, source: 'notion' })
-  } catch (err) {
-    console.error('❌ Erreur route dossiers:', err)
-    res.status(500).json({ error: 'Erreur lors de la récupération des dossiers' })
-  }
-})
-
-// GET /api/notion/stats
+// GET /api/opportunities/stats
 router.get('/stats', async (req, res) => {
   try {
-    if (isCacheValid()) {
+    if (isCacheValid() && cache.stats) {
       return res.json({ data: cache.stats, source: 'cache' })
     }
 
@@ -64,29 +46,27 @@ router.get('/stats', async (req, res) => {
     cache.stats = stats
     cache.lastUpdate = Date.now()
 
-    res.json({ data: stats, source: 'notion' })
+    res.json({ data: stats, source: 'airtable' })
   } catch (err) {
     console.error('❌ Erreur route stats:', err)
     res.status(500).json({ error: 'Erreur lors du calcul des stats' })
   }
 })
 
-// GET /api/notion/refresh
+// GET /api/opportunities/refresh — force le rechargement depuis Airtable
 router.get('/refresh', async (req, res) => {
   try {
-    cache.lastUpdate = 0 // Forcer un rafraîchissement
+    cache.lastUpdate = 0
     const opportunities = await getOpportunities()
-    const dossiers = await getDossiers()
     const stats = await getStats()
 
     cache.opportunities = opportunities
-    cache.dossiers = dossiers
     cache.stats = stats
     cache.lastUpdate = Date.now()
 
     res.json({
-      message: 'Données Notion rafraîchies',
-      data: { opportunities, dossiers, stats }
+      message: 'Données Airtable rafraîchies',
+      data: { opportunities, stats }
     })
   } catch (err) {
     console.error('❌ Erreur refresh:', err)

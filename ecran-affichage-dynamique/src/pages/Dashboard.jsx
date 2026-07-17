@@ -28,7 +28,7 @@ export default function Dashboard() {
     try {
       if (isInitial) setLoading(true)
       const [oppRes, stateRes] = await Promise.all([
-        fetch(`${API_URL}/api/notion/opportunities`),
+        fetch(`${API_URL}/api/opportunities`),
         fetch(`${API_URL}/api/moderation/state`)
       ])
 
