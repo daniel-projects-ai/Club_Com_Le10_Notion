@@ -19,7 +19,25 @@
 | Interface | ID | Pages |
 |---|---|---|
 | Espace Coworkers | `pbdNCHS6Btu0JKWPU` | Opportunités (recordReview), Annuaire (gallery) |
-| Pilotage Macao | `pbdBCobP63gRYWFm1` | Pipeline (kanban), Positionnements, Inscriptions à valider, Contacts à traiter |
+| Pilotage Macao | `pbdBCobP63gRYWFm1` | Pipeline (kanban), Positionnements, Inscriptions à valider, Contacts à traiter, **Affichage Écran TV** |
+
+## 📺 Écran TV — rebranché sur Airtable (2026-07-16)
+
+Le backend Express (Railway) lit désormais **Airtable** et non plus Notion. Notion n'est plus utilisé par aucun composant.
+
+- `server/services/airtableClient.js` — client REST Airtable (fetch natif, pagination, retry)
+- `server/routes/opportunities.js` — route `/api/opportunities` (cache 2 min)
+- Anciens `notionClient.js` et `routes/notion.js` supprimés
+- Alias legacy `/api/notion/opportunities` conservé le temps du redéploiement — supprimable
+
+**Règle d'affichage** : une opportunité apparaît sur la TV si **« Visible sur écran »** est cochée, qu'elle a un acheteur, et que son statut n'est ni `Perdu`, ni `Archivé`, ni `NO GO`. La page **Affichage Écran TV** (interface Pilotage Macao) permet de piloter ça.
+
+### Variables d'environnement Railway
+```
+AIRTABLE_TOKEN=<Personal Access Token Airtable>   # à créer sur airtable.com/create/tokens
+AIRTABLE_BASE_ID=appdJ309q39i4Gr8t                # optionnel (valeur par défaut dans le code)
+```
+Les variables `NOTION_*` ne servent plus et peuvent être supprimées.
 
 ## Formulaires Jotform
 
