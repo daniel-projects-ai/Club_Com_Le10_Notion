@@ -53,10 +53,35 @@ router.post('/request-link', async (req, res) => {
   res.json(reponseNeutre)
 })
 
+// Jetons magiques déjà consommés : jti → date de consommation.
+// Un lien transféré, ou pré-visité par un antivirus de messagerie, ne doit pas
+// pouvoir ouvrir une seconde session. Au-delà de la durée de vie du jeton
+// (15 min), la signature suffit à le rejeter : on purge donc les entrées pour
+// éviter que la Map ne grossisse indéfiniment.
+const VALIDITE_LIEN_MS = 15 * 60 * 1000
+const jetonsConsommes = new Map()
+
+function dejaConsomme(jti) {
+  const maintenant = Date.now()
+  for (const [cle, date] of jetonsConsommes) {
+    if (maintenant - date > VALIDITE_LIEN_MS) jetonsConsommes.delete(cle)
+  }
+  if (jetonsConsommes.has(jti)) return true
+  jetonsConsommes.set(jti, maintenant)
+  return false
+}
+
 // GET /api/intranet/auth/verify?token=...
 router.get('/verify', (req, res) => {
-  const user = verifyMagicToken(req.query.token)
-  if (!user) return res.status(401).json({ error: 'Lien invalide ou expiré' })
+  const jeton = verifyMagicToken(req.query.token)
+  if (!jeton) return res.status(401).json({ error: 'Lien invalide ou expiré' })
+
+  // Un jeton sans jti (ancien format) est refusé : on ne sait pas le tracer.
+  if (!jeton.jti || dejaConsomme(jeton.jti)) {
+    return res.status(401).json({ error: 'Lien déjà utilisé ou expiré' })
+  }
+
+  const { jti, ...user } = jeton
 
   res.cookie(COOKIE_NAME, signSession(user), {
     ...OPTIONS_COOKIE,
