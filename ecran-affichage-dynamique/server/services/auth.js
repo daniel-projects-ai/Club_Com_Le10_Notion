@@ -29,7 +29,12 @@ export function verifyMagicToken(token) {
   }
 }
 
-export function signSession(user, expiresInDays = 30) {
+// 7 jours et pas davantage : le rôle et le statut du coworker sont figés dans
+// le jeton, jamais relus côté serveur. Plus la session est longue, plus une
+// révocation (passage à « Inactif », changement de rôle) met de temps à
+// prendre effet. Sept jours borne ce délai sans forcer une reconnexion
+// quotidienne.
+export function signSession(user, expiresInDays = 7) {
   return jwt.sign({ ...payloadOf(user), aud: AUD_SESSION }, SECRET, {
     expiresIn: `${expiresInDays}d`
   })

@@ -85,7 +85,9 @@ router.get('/verify', (req, res) => {
 
   res.cookie(COOKIE_NAME, signSession(user), {
     ...OPTIONS_COOKIE,
-    maxAge: 30 * 24 * 3600 * 1000
+    // Aligné sur la durée du jeton de session (voir signSession) : borne le
+    // délai de révocation d'un compte désactivé.
+    maxAge: 7 * 24 * 3600 * 1000
   })
   res.json({ user })
 })
