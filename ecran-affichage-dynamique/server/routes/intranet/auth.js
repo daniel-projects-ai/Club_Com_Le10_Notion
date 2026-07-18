@@ -20,15 +20,50 @@ const OPTIONS_COOKIE = {
   sameSite: EN_PRODUCTION ? 'none' : 'lax'
 }
 
-// Limitation simple en mémoire : 5 demandes par email et par heure.
-const demandes = new Map()
-function tropDeDemandes(email) {
+// Limitation simple en mémoire, sur deux axes :
+//  - 5 demandes par email et par heure (protège une boîte donnée du spam) ;
+//  - 20 demandes par IP et par heure (empêche un script de boucler sur des
+//    adresses inventées, ce qui contournerait la limite par email).
+// Les clés dont la liste se vide sont supprimées : sans ça, chaque email
+// inédit laisserait une entrée définitive et ferait enfler la mémoire du
+// process — qui héberge aussi l'Écran TV.
+const FENETRE_MS = 3600_000
+const MAX_PAR_EMAIL = 5
+const MAX_PAR_IP = 20
+
+const demandesParEmail = new Map()
+const demandesParIp = new Map()
+
+function tropDeDemandesSur(registre, cle, maximum) {
   const maintenant = Date.now()
-  const recentes = (demandes.get(email) || []).filter(t => maintenant - t < 3600_000)
-  if (recentes.length >= 5) return true
+  const recentes = (registre.get(cle) || []).filter(t => maintenant - t < FENETRE_MS)
+  if (recentes.length >= maximum) {
+    registre.set(cle, recentes)
+    return true
+  }
   recentes.push(maintenant)
-  demandes.set(email, recentes)
+  registre.set(cle, recentes)
   return false
+}
+
+// Purge globale : on retire les clés dont toutes les entrées ont expiré.
+function purger(registre) {
+  const maintenant = Date.now()
+  for (const [cle, dates] of registre) {
+    const recentes = dates.filter(t => maintenant - t < FENETRE_MS)
+    if (recentes.length === 0) registre.delete(cle)
+    else registre.set(cle, recentes)
+  }
+}
+
+function tropDeDemandes(email, ip) {
+  purger(demandesParEmail)
+  purger(demandesParIp)
+  // Les deux limites sont évaluées : l'IP d'abord, pour qu'un script bouclant
+  // sur des adresses inventées soit stoppé même si chaque email est inédit.
+  const ipSaturee = tropDeDemandesSur(demandesParIp, ip || 'inconnue', MAX_PAR_IP)
+  const emailSature = tropDeDemandesSur(demandesParEmail, email, MAX_PAR_EMAIL)
+  return ipSaturee || emailSature
 }
 
 // POST /api/intranet/auth/request-link
@@ -38,7 +73,7 @@ router.post('/request-link', async (req, res) => {
   // si un compte existe.
   const reponseNeutre = { message: 'Si ce compte existe, un lien vient d\'être envoyé.' }
 
-  if (!email || tropDeDemandes(email)) return res.json(reponseNeutre)
+  if (!email || tropDeDemandes(email, req.ip)) return res.json(reponseNeutre)
 
   try {
     const cw = await findCoworkerByEmail(email)
