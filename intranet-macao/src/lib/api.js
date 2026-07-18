@@ -40,5 +40,9 @@ export const api = {
   tableauDeBord: () => appel('/dashboard'),
   opportunites: () => appel('/opportunities'),
   annuaire: () => appel('/directory'),
-  profil: () => appel('/profile')
+  profil: () => appel('/profile'),
+
+  // Se déclarer intéressé par une opportunité (ou revenir sur sa décision).
+  sePositionner: (id) => appel(`/opportunities/${id}/interest`, { method: 'POST' }),
+  retirerPositionnement: (id) => appel(`/opportunities/${id}/interest`, { method: 'DELETE' })
 }

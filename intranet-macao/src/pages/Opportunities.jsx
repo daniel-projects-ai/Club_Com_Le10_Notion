@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import StatutPastille from '../components/StatutPastille'
@@ -12,13 +13,72 @@ function Champ({ label, valeur }) {
   )
 }
 
+// Bouton « Ça m'intéresse » / « Vous êtes positionné ».
+// L'état remonte au parent, qui met à jour la carte sans recharger la page.
+function BoutonInteret({ opp, onChange }) {
+  const [enCours, setEnCours] = useState(false)
+  const [erreur, setErreur] = useState(null)
+
+  const basculer = async () => {
+    setEnCours(true)
+    setErreur(null)
+    try {
+      if (opp.estPositionne) {
+        await api.retirerPositionnement(opp.id)
+        onChange({ estPositionne: false, positionnementId: null })
+      } else {
+        const { data } = await api.sePositionner(opp.id)
+        onChange({ estPositionne: true, positionnementId: data?.id || null })
+      }
+    } catch (e) {
+      setErreur(e.message)
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  const libelle = enCours
+    ? (opp.estPositionne ? 'Retrait…' : 'Enregistrement…')
+    : (opp.estPositionne ? '✓ Vous êtes positionné' : 'Ça m’intéresse')
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={basculer}
+        disabled={enCours}
+        title={opp.estPositionne ? 'Cliquez pour retirer votre positionnement' : undefined}
+        className={[
+          'rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50',
+          opp.estPositionne
+            ? 'border border-macao-teal bg-cream-soft text-macao-teal hover:border-macao-terra hover:text-macao-terra'
+            : 'bg-macao-terra text-white hover:opacity-90'
+        ].join(' ')}
+      >
+        {libelle}
+      </button>
+      {opp.estPositionne && !enCours && (
+        <span className="ml-2 text-2xs text-neutral-400">Cliquez à nouveau pour retirer</span>
+      )}
+      {erreur && <p className="mt-1 text-2xs text-macao-terra">Échec : {erreur}</p>}
+    </div>
+  )
+}
+
 export default function Opportunities() {
   const { donnees, chargement, erreur } = useRequete(api.opportunites)
 
+  // Copie locale : les interactions (positionnement, statut) modifient une
+  // seule carte, sans repasser par un rechargement complet de la liste.
+  const [opportunites, setOpportunites] = useState([])
+  useEffect(() => { setOpportunites(donnees || []) }, [donnees])
+
+  const majOpportunite = (id, champs) => {
+    setOpportunites((liste) => liste.map(o => (o.id === id ? { ...o, ...champs } : o)))
+  }
+
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
   if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les opportunités : {erreur}</p>
-
-  const opportunites = donnees || []
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
@@ -45,6 +105,10 @@ export default function Opportunities() {
                 <Champ label="Budget" valeur={formaterBudget(opp.budget)} />
                 <Champ label="Échéance" valeur={formaterDate(opp.deadline)} />
                 <Champ label="Territoire" valeur={ouTiret(opp.territoire)} />
+              </div>
+
+              <div className="mt-5">
+                <BoutonInteret opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
               </div>
             </article>
           ))}
