@@ -14,6 +14,11 @@ import { requireAuth } from './middleware/requireAuth.js'
 dotenv.config()
 
 const app = express()
+
+// Railway place un proxy devant l'application. Sans cette ligne, req.ip
+// renvoie l'IP du proxy : la limite par IP de /auth/request-link compterait
+// tous les visiteurs sur un seul compteur, donc ne protégerait rien.
+app.set('trust proxy', 1)
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
