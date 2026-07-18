@@ -5,6 +5,10 @@ import { WebSocketServer } from 'ws'
 import dotenv from 'dotenv'
 import opportunitiesRoutes from './routes/opportunities.js'
 import moderationRoutes from './routes/moderation.js'
+import cookieParser from 'cookie-parser'
+import intranetAuthRoutes from './routes/intranet/auth.js'
+import intranetDataRoutes from './routes/intranet/data.js'
+import { requireAuth } from './middleware/requireAuth.js'
 
 // Charger les variables d'environnement
 dotenv.config()
@@ -13,18 +17,30 @@ const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
-// Middleware CORS manuel - autoriser toutes les origines (affichage public)
+// L'Écran TV est public ; l'intranet a besoin de cookies, donc d'une
+// origine explicite : le joker "*" est interdit avec credentials.
+const ORIGINES_INTRANET = [
+  process.env.INTRANET_URL || 'http://localhost:3001',
+  'http://localhost:3001'
+]
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*')
+  const origin = req.headers.origin
+  if (req.path.startsWith('/api/intranet')) {
+    if (origin && ORIGINES_INTRANET.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin)
+      res.header('Access-Control-Allow-Credentials', 'true')
+    }
+  } else {
+    res.header('Access-Control-Allow-Origin', '*')
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200)
-  }
-
+  if (req.method === 'OPTIONS') return res.sendStatus(200)
   next()
 })
+
+app.use(cookieParser())
 
 app.use(express.json())
 
@@ -93,6 +109,11 @@ app.use('/api/opportunities', opportunitiesRoutes)
 // Vercel et Railway se redéploient. Supprimable une fois le front à jour.
 app.use('/api/notion/opportunities', opportunitiesRoutes)
 app.use('/api/moderation', moderationRoutes(moderationState, broadcastUpdate))
+
+// Routes intranet : l'auth est publique (demande de lien, vérification),
+// le reste passe obligatoirement par une session.
+app.use('/api/intranet/auth', intranetAuthRoutes)
+app.use('/api/intranet', requireAuth, intranetDataRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

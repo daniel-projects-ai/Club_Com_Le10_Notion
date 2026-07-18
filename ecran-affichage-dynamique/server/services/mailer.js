@@ -1,7 +1,16 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.RESEND_FROM || 'intranet@agence-macao.com'
+
+// Instanciation paresseuse : `new Resend(undefined)` lève une exception. Au
+// niveau du module, cette exception ferait planter TOUT le serveur au
+// démarrage (Écran TV compris) dès que RESEND_API_KEY manque. On la crée donc
+// au premier envoi, et l'erreur reste cantonnée à la route d'authentification.
+let resend = null
+function client() {
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY)
+  return resend
+}
 
 export async function sendMagicLink(email, lien, prenom = '') {
   const salutation = prenom ? `Bonjour ${prenom},` : 'Bonjour,'
@@ -25,7 +34,7 @@ export async function sendMagicLink(email, lien, prenom = '') {
       </p>
     </div>`
 
-  await resend.emails.send({
+  await client().emails.send({
     from: `Intranet Macao <${FROM}>`,
     to: email,
     subject: 'Votre lien de connexion à l\'intranet Macao',
