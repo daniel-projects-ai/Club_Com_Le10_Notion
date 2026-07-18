@@ -7,6 +7,19 @@ import { requireAuth, COOKIE_NAME } from '../../middleware/requireAuth.js'
 const router = express.Router()
 const INTRANET_URL = process.env.INTRANET_URL || 'http://localhost:3001'
 
+// Front et API vivent sur deux domaines distincts (Vercel / Railway) : le
+// cookie doit être SameSite=None, ce qui impose Secure. En local, tout est
+// sur localhost, donc Lax suffit et Secure casserait le HTTP.
+const EN_PRODUCTION = process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT)
+
+// Attributs partagés entre res.cookie et res.clearCookie : s'ils diffèrent,
+// le navigateur ne supprime pas le cookie posé à la connexion.
+const OPTIONS_COOKIE = {
+  httpOnly: true,
+  secure: EN_PRODUCTION,
+  sameSite: EN_PRODUCTION ? 'none' : 'lax'
+}
+
 // Limitation simple en mémoire : 5 demandes par email et par heure.
 const demandes = new Map()
 function tropDeDemandes(email) {
@@ -46,9 +59,7 @@ router.get('/verify', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Lien invalide ou expiré' })
 
   res.cookie(COOKIE_NAME, signSession(user), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    ...OPTIONS_COOKIE,
     maxAge: 30 * 24 * 3600 * 1000
   })
   res.json({ user })
@@ -59,7 +70,7 @@ router.get('/me', requireAuth, (req, res) => res.json({ user: req.user }))
 
 // POST /api/intranet/auth/logout
 router.post('/logout', (req, res) => {
-  res.clearCookie(COOKIE_NAME)
+  res.clearCookie(COOKIE_NAME, OPTIONS_COOKIE)
   res.json({ ok: true })
 })
 
