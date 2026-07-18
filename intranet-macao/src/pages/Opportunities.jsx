@@ -119,6 +119,70 @@ function SelecteurStatut({ opp, onChange }) {
   )
 }
 
+// Liste dépliable des coworkers positionnés — réservée à Macao.
+// Le chargement est paresseux : on n'interroge Airtable qu'à l'ouverture.
+function BlocPositionnements({ opportuniteId }) {
+  const [ouvert, setOuvert] = useState(false)
+  const [liste, setListe] = useState(null)
+  const [chargement, setChargement] = useState(false)
+  const [erreur, setErreur] = useState(null)
+
+  const basculer = async () => {
+    const prochain = !ouvert
+    setOuvert(prochain)
+    if (!prochain || liste) return
+
+    setChargement(true)
+    setErreur(null)
+    try {
+      const { data } = await api.positionnements(opportuniteId)
+      setListe(data || [])
+    } catch (e) {
+      setErreur(e.message)
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t border-neutral-100 pt-3">
+      <button
+        type="button"
+        onClick={basculer}
+        className="text-xs font-semibold text-macao-teal hover:text-macao-terra"
+      >
+        {ouvert ? '▾' : '▸'} Positionnements
+        {liste !== null && ` (${liste.length})`}
+      </button>
+
+      {ouvert && (
+        <div className="mt-2">
+          {chargement && <p className="text-xs text-neutral-500">Chargement…</p>}
+          {erreur && <p className="text-xs text-macao-terra">Impossible de charger : {erreur}</p>}
+          {liste && liste.length === 0 && (
+            <p className="text-xs text-neutral-500">Aucun positionnement pour l’instant.</p>
+          )}
+          {liste && liste.length > 0 && (
+            <ul className="space-y-2">
+              {liste.map((p) => (
+                <li key={p.id} className="flex items-baseline justify-between gap-4 text-xs">
+                  <span>
+                    <span className="font-semibold text-macao-ink">{p.nom}</span>
+                    {p.metiers?.length > 0 && (
+                      <span className="text-neutral-500"> — {p.metiers.join(', ')}</span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-neutral-400">{formaterDate(p.date)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Opportunities() {
   const { user } = useAuth()
   const { donnees, chargement, erreur } = useRequete(api.opportunites)
@@ -168,6 +232,8 @@ export default function Opportunities() {
               <div className="mt-5">
                 <BoutonInteret opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
               </div>
+
+              {estMacao && <BlocPositionnements opportuniteId={opp.id} />}
             </article>
           ))}
         </div>

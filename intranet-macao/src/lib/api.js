@@ -48,5 +48,6 @@ export const api = {
 
   // Réservé à Macao — le serveur renvoie 403 aux autres rôles.
   changerStatut: (id, statut) =>
-    appel(`/opportunities/${id}/status`, { method: 'PATCH', body: JSON.stringify({ statut }) })
+    appel(`/opportunities/${id}/status`, { method: 'PATCH', body: JSON.stringify({ statut }) }),
+  positionnements: (id) => appel(`/opportunities/${id}/positionnements`)
 }

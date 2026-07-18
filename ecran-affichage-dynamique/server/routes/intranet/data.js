@@ -9,6 +9,7 @@ import { filterOpportunityForRole } from '../../services/permissions.js'
 import { requireRole } from '../../middleware/requireAuth.js'
 import {
   listPositionnementsPourCoworker,
+  listPositionnementsPourOpportunite,
   creerPositionnement,
   supprimerPositionnement
 } from '../../services/positionnementsClient.js'
@@ -98,6 +99,16 @@ router.patch('/opportunities/:id/status', requireRole('Macao'), async (req, res)
       return res.status(400).json({ error: err.message })
     }
     res.status(500).json({ error: 'Impossible de mettre à jour le statut' })
+  }
+})
+
+// GET /api/intranet/opportunities/:id/positionnements — réservé à Macao.
+router.get('/opportunities/:id/positionnements', requireRole('Macao'), async (req, res) => {
+  try {
+    res.json({ data: await listPositionnementsPourOpportunite(req.params.id) })
+  } catch (err) {
+    console.error('❌ positionnements:', err.message)
+    res.status(500).json({ error: 'Erreur de chargement' })
   }
 })
 
