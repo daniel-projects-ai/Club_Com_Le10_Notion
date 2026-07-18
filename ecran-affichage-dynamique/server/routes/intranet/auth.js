@@ -1,0 +1,66 @@
+import express from 'express'
+import { findCoworkerByEmail } from '../../services/coworkersClient.js'
+import { signMagicToken, verifyMagicToken, signSession } from '../../services/auth.js'
+import { sendMagicLink } from '../../services/mailer.js'
+import { requireAuth, COOKIE_NAME } from '../../middleware/requireAuth.js'
+
+const router = express.Router()
+const INTRANET_URL = process.env.INTRANET_URL || 'http://localhost:3001'
+
+// Limitation simple en mémoire : 5 demandes par email et par heure.
+const demandes = new Map()
+function tropDeDemandes(email) {
+  const maintenant = Date.now()
+  const recentes = (demandes.get(email) || []).filter(t => maintenant - t < 3600_000)
+  if (recentes.length >= 5) return true
+  recentes.push(maintenant)
+  demandes.set(email, recentes)
+  return false
+}
+
+// POST /api/intranet/auth/request-link
+router.post('/request-link', async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase()
+  // Réponse volontairement identique dans tous les cas : on ne révèle jamais
+  // si un compte existe.
+  const reponseNeutre = { message: 'Si ce compte existe, un lien vient d\'être envoyé.' }
+
+  if (!email || tropDeDemandes(email)) return res.json(reponseNeutre)
+
+  try {
+    const cw = await findCoworkerByEmail(email)
+    if (cw) {
+      const token = signMagicToken({ id: cw.id, email: cw.email, role: cw.role })
+      const lien = `${INTRANET_URL}/verify?token=${encodeURIComponent(token)}`
+      await sendMagicLink(cw.email, lien, cw.nom.split(' ')[0])
+    }
+  } catch (err) {
+    console.error('❌ request-link:', err.message)
+  }
+  res.json(reponseNeutre)
+})
+
+// GET /api/intranet/auth/verify?token=...
+router.get('/verify', (req, res) => {
+  const user = verifyMagicToken(req.query.token)
+  if (!user) return res.status(401).json({ error: 'Lien invalide ou expiré' })
+
+  res.cookie(COOKIE_NAME, signSession(user), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 3600 * 1000
+  })
+  res.json({ user })
+})
+
+// GET /api/intranet/auth/me
+router.get('/me', requireAuth, (req, res) => res.json({ user: req.user }))
+
+// POST /api/intranet/auth/logout
+router.post('/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME)
+  res.json({ ok: true })
+})
+
+export default router
