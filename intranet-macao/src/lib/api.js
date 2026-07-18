@@ -1,7 +1,11 @@
-// Adresse du backend : local en développement, Railway en production.
+// En production, on n'appelle PAS Railway directement : Vercel relaie /api/*
+// vers le backend (voir vercel.json). Le navigateur ne dialogue donc qu'avec
+// un seul domaine, et le cookie de session reste first-party — indispensable
+// car Safari (ITP) bloque les cookies tiers, quel que soit le SameSite.
+// En local, le backend tourne à côté sur son propre port.
 const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:5001'
-  : 'https://clubcomle10notion-production.up.railway.app'
+  : ''
 
 // Callback global déclenché dès qu'une réponse 401 arrive : l'application
 // s'en sert pour vider l'utilisateur courant et laisser la garde de routage
