@@ -26,6 +26,10 @@ const ORIGINES_INTRANET = [
 
 app.use((req, res, next) => {
   const origin = req.headers.origin
+  // L'en-tête Access-Control-Allow-Origin dépend de l'origine appelante :
+  // sans Vary, un cache intermédiaire pourrait resservir la valeur calculée
+  // pour une autre origine.
+  res.header('Vary', 'Origin')
   if (req.path.startsWith('/api/intranet')) {
     if (origin && ORIGINES_INTRANET.includes(origin)) {
       res.header('Access-Control-Allow-Origin', origin)
