@@ -3,6 +3,15 @@ const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:5001'
   : 'https://clubcomle10notion-production.up.railway.app'
 
+// Callback global déclenché dès qu'une réponse 401 arrive : l'application
+// s'en sert pour vider l'utilisateur courant et laisser la garde de routage
+// rediriger vers la connexion, plutôt que d'afficher « NON_AUTHENTIFIE ».
+let surSessionExpireeCb = null
+
+export function surSessionExpiree(cb) {
+  surSessionExpireeCb = cb
+}
+
 // `credentials: include` est indispensable : la session vit dans un cookie.
 async function appel(chemin, options = {}) {
   const res = await fetch(`${API_URL}/api/intranet${chemin}`, {
@@ -10,7 +19,10 @@ async function appel(chemin, options = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...options
   })
-  if (res.status === 401) throw new Error('NON_AUTHENTIFIE')
+  if (res.status === 401) {
+    surSessionExpireeCb?.()
+    throw new Error('NON_AUTHENTIFIE')
+  }
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Erreur')
   return data

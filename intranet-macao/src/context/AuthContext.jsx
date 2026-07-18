@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { api } from '../lib/api'
+import { api, surSessionExpiree } from '../lib/api'
 
 const AuthContext = createContext(null)
 
@@ -10,6 +10,11 @@ export function AuthProvider({ children }) {
 
   // Au montage, on tente de restaurer la session portée par le cookie.
   useEffect(() => {
+    // Toute réponse 401 (session expirée en cours de navigation) vide
+    // l'utilisateur : la garde `Protege` renvoie alors vers /connexion au lieu
+    // de laisser une erreur technique à l'écran.
+    surSessionExpiree(() => setUser(null))
+
     api.moi()
       .then(({ user }) => setUser(user))
       .catch(() => setUser(null))
