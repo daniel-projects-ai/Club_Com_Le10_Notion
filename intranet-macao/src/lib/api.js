@@ -44,5 +44,9 @@ export const api = {
 
   // Se déclarer intéressé par une opportunité (ou revenir sur sa décision).
   sePositionner: (id) => appel(`/opportunities/${id}/interest`, { method: 'POST' }),
-  retirerPositionnement: (id) => appel(`/opportunities/${id}/interest`, { method: 'DELETE' })
+  retirerPositionnement: (id) => appel(`/opportunities/${id}/interest`, { method: 'DELETE' }),
+
+  // Réservé à Macao — le serveur renvoie 403 aux autres rôles.
+  changerStatut: (id, statut) =>
+    appel(`/opportunities/${id}/status`, { method: 'PATCH', body: JSON.stringify({ statut }) })
 }

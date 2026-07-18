@@ -1,7 +1,12 @@
 import express from 'express'
-import { getOpportunities, getAllOpportunities } from '../../services/airtableClient.js'
+import {
+  getOpportunities,
+  getAllOpportunities,
+  updateOpportunityStatus
+} from '../../services/airtableClient.js'
 import { listActiveCoworkers, getCoworkerById } from '../../services/coworkersClient.js'
 import { filterOpportunityForRole } from '../../services/permissions.js'
+import { requireRole } from '../../middleware/requireAuth.js'
 import {
   listPositionnementsPourCoworker,
   creerPositionnement,
@@ -77,6 +82,22 @@ router.delete('/opportunities/:id/interest', async (req, res) => {
   } catch (err) {
     console.error('❌ interest (suppression):', err.message)
     res.status(500).json({ error: 'Impossible de retirer votre positionnement' })
+  }
+})
+
+// PATCH /api/intranet/opportunities/:id/status — réservé à Macao.
+router.patch('/opportunities/:id/status', requireRole('Macao'), async (req, res) => {
+  const { statut } = req.body || {}
+  try {
+    const opp = await updateOpportunityStatus(req.params.id, statut)
+    res.json({ data: opp })
+  } catch (err) {
+    console.error('❌ status:', err.message)
+    // Un statut hors liste est une erreur d'appel, pas une panne serveur.
+    if (/Statut invalide/.test(err.message)) {
+      return res.status(400).json({ error: err.message })
+    }
+    res.status(500).json({ error: 'Impossible de mettre à jour le statut' })
   }
 })
 

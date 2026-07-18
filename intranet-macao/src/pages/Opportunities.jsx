@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
+import { useAuth } from '../context/AuthContext'
 import StatutPastille from '../components/StatutPastille'
 import { formaterBudget, formaterDate, ouTiret } from '../lib/format'
+
+// Même liste fermée que côté serveur (STATUTS_OPPORTUNITE). Le front s'en
+// sert seulement pour peupler le menu : c'est le serveur qui valide.
+const STATUTS = [
+  'À analyser',
+  'GO / NO GO à décider',
+  'GO',
+  'NO GO',
+  'Transmis au Club',
+  'En réponse',
+  'Déposé',
+  'Gagné',
+  'Perdu',
+  'Archivé'
+]
 
 function Champ({ label, valeur }) {
   return (
@@ -65,8 +81,48 @@ function BoutonInteret({ opp, onChange }) {
   )
 }
 
+// Menu de statut — affiché uniquement pour Macao. La protection réelle est
+// côté serveur (requireRole('Macao') sur PATCH /opportunities/:id/status).
+function SelecteurStatut({ opp, onChange }) {
+  const [etat, setEtat] = useState('repos') // repos | envoi | ok | erreur
+  const [erreur, setErreur] = useState(null)
+
+  const changer = async (statut) => {
+    if (statut === opp.status) return
+    setEtat('envoi')
+    setErreur(null)
+    try {
+      await api.changerStatut(opp.id, statut)
+      onChange({ status: statut })
+      setEtat('ok')
+    } catch (e) {
+      setErreur(e.message)
+      setEtat('erreur')
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <select
+        value={opp.status || ''}
+        disabled={etat === 'envoi'}
+        onChange={(e) => changer(e.target.value)}
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs text-macao-ink disabled:opacity-50"
+      >
+        {!opp.status && <option value="">Sans statut</option>}
+        {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      {etat === 'envoi' && <span className="text-2xs text-neutral-400">Mise à jour…</span>}
+      {etat === 'ok' && <span className="text-2xs text-macao-teal">Statut enregistré</span>}
+      {etat === 'erreur' && <span className="text-2xs text-macao-terra">Échec : {erreur}</span>}
+    </div>
+  )
+}
+
 export default function Opportunities() {
+  const { user } = useAuth()
   const { donnees, chargement, erreur } = useRequete(api.opportunites)
+  const estMacao = user?.role === 'Macao'
 
   // Copie locale : les interactions (positionnement, statut) modifient une
   // seule carte, sans repasser par un rechargement complet de la liste.
@@ -97,7 +153,9 @@ export default function Opportunities() {
             <article key={opp.id} className="rounded-xl border-l-4 border-macao-terra bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <h2 className="font-serif text-xl text-macao-ink">{opp.name}</h2>
-                <StatutPastille statut={opp.status} />
+                {estMacao
+                  ? <SelecteurStatut opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
+                  : <StatutPastille statut={opp.status} />}
               </div>
               <div className="mt-1 text-sm font-medium text-macao-teal">{ouTiret(opp.client)}</div>
               {opp.objet && <p className="mt-3 text-sm leading-relaxed text-neutral-600">{opp.objet}</p>}

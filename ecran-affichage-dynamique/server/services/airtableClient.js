@@ -9,6 +9,26 @@ const TABLE_OPPORTUNITES = process.env.AIRTABLE_TABLE_OPPORTUNITES || 'tbl3jvmo4
 // Statuts qu'on n'affiche jamais sur l'écran public
 const STATUTS_EXCLUS = ['Perdu', 'Archivé', 'NO GO']
 
+// Liste fermée du champ « Statut » côté Airtable. Toute écriture est
+// vérifiée contre cette liste : une valeur inconnue serait rejetée par
+// Airtable, autant échouer avant l'appel réseau.
+export const STATUTS_OPPORTUNITE = [
+  'À analyser',
+  'GO / NO GO à décider',
+  'GO',
+  'NO GO',
+  'Transmis au Club',
+  'En réponse',
+  'Déposé',
+  'Gagné',
+  'Perdu',
+  'Archivé'
+]
+
+// Identifiant du champ « Statut » : on écrit par ID pour survivre à un
+// renommage de colonne.
+const CHAMP_STATUT = 'fldfLM2jlZSFEnlPL'
+
 async function airtableFetch(tableId, params = {}, retries = 2) {
   const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}`)
   Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v))
@@ -122,4 +142,29 @@ export async function getStats() {
   }
 }
 
-export default { getOpportunities, getAllOpportunities, getStats }
+// Fait avancer le statut d'une opportunité (réservé à Macao côté route).
+// Lève si le statut n'appartient pas à la liste fermée.
+export async function updateOpportunityStatus(opportuniteId, statut) {
+  if (!opportuniteId) throw new Error('Identifiant d\'opportunité requis')
+  if (!STATUTS_OPPORTUNITE.includes(statut)) {
+    throw new Error(`Statut invalide : ${statut}`)
+  }
+
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${TABLE_OPPORTUNITES}/${opportuniteId}`
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ fields: { [CHAMP_STATUT]: statut }, typecast: true })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data?.error?.message || data?.error?.type || `HTTP ${res.status}`)
+  }
+
+  return mapOpportunite(data)
+}
+
+export default { getOpportunities, getAllOpportunities, getStats, updateOpportunityStatus }
