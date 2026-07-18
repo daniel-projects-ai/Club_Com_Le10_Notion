@@ -24,11 +24,15 @@
 Airtable (données)
     ↑ API REST, token serveur uniquement
 Backend Express (Railway, existant)
-    ├─ /api/public/*    → Écran TV (ouvert, non authentifié)
-    └─ /api/intranet/*  → portail (session requise)
+    ├─ /api/opportunities, /api/moderation  → Écran TV (ouvert, inchangé)
+    └─ /api/intranet/*                      → portail (session requise)
     ↓
 Portail React + Vite (Vercel, nouvelle application)
 ```
+
+**Les routes publiques existantes ne sont pas renommées.** L'Écran TV est en production ; on ajoute `/api/intranet/*` à côté sans toucher à `/api/opportunities`. Aucune régression possible sur l'affichage.
+
+**Emplacement du code.** Nouvelle application `intranet-macao/` dans le dépôt existant, à côté de `ecran-affichage-dynamique/`. Déploiement Vercel séparé (deux projets, un seul dépôt) : les deux applications évoluent indépendamment tout en partageant le même backend.
 
 **Le filtrage par rôle se fait côté serveur.** Le client ne reçoit jamais de données qu'il n'a pas le droit de voir : aucune donnée sensible ne transite pour être masquée ensuite en CSS.
 
