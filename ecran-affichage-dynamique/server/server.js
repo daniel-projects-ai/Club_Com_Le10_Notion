@@ -112,8 +112,18 @@ app.use('/api/moderation', moderationRoutes(moderationState, broadcastUpdate))
 
 // Routes intranet : l'auth est publique (demande de lien, vérification),
 // le reste passe obligatoirement par une session.
-app.use('/api/intranet/auth', intranetAuthRoutes)
-app.use('/api/intranet', requireAuth, intranetDataRoutes)
+// Sans JWT_SECRET, aucun jeton ne peut être signé : on refuse explicitement
+// plutôt que d'échouer en silence (l'utilisateur croirait avoir reçu un mail).
+// On ne fait surtout pas planter le process : ce serveur héberge aussi l'Écran TV.
+if (process.env.JWT_SECRET) {
+  app.use('/api/intranet/auth', intranetAuthRoutes)
+  app.use('/api/intranet', requireAuth, intranetDataRoutes)
+} else {
+  console.error('❌ JWT_SECRET manquant : les routes /api/intranet sont désactivées.')
+  app.use('/api/intranet', (req, res) => {
+    res.status(503).json({ error: 'Intranet non configuré' })
+  })
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
