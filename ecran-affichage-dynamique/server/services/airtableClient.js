@@ -76,7 +76,10 @@ function estAffichable(o) {
   return true
 }
 
-export async function getOpportunities() {
+// Toutes les opportunités, sans le filtre d'affichage : c'est ce dont le
+// pilotage a besoin (une opportunité « À analyser » n'est pas encore cochée
+// « Visible sur écran », elle doit pourtant remonter au tableau de bord).
+export async function getAllOpportunities() {
   try {
     if (!AIRTABLE_TOKEN) {
       console.error('❌ AIRTABLE_TOKEN manquant — impossible de lire Airtable')
@@ -84,15 +87,20 @@ export async function getOpportunities() {
     }
 
     const records = await fetchAllRecords(TABLE_OPPORTUNITES)
-    const toutes = records.map(mapOpportunite)
-    const affichables = toutes.filter(estAffichable)
-
-    console.log(`📊 Airtable : ${toutes.length} opportunités → ${affichables.length} affichables`)
-    return affichables
+    return records.map(mapOpportunite)
   } catch (err) {
     console.error('❌ Erreur Airtable (Opportunités):', err.message)
     return []
   }
+}
+
+// Vue publique (Écran TV) : uniquement les opportunités affichables.
+export async function getOpportunities() {
+  const toutes = await getAllOpportunities()
+  const affichables = toutes.filter(estAffichable)
+
+  console.log(`📊 Airtable : ${toutes.length} opportunités → ${affichables.length} affichables`)
+  return affichables
 }
 
 // Stats calculées sur les opportunités affichables
@@ -114,4 +122,4 @@ export async function getStats() {
   }
 }
 
-export default { getOpportunities, getStats }
+export default { getOpportunities, getAllOpportunities, getStats }

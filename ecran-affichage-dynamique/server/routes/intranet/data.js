@@ -1,5 +1,5 @@
 import express from 'express'
-import { getOpportunities } from '../../services/airtableClient.js'
+import { getOpportunities, getAllOpportunities } from '../../services/airtableClient.js'
 import { listActiveCoworkers, getCoworkerById } from '../../services/coworkersClient.js'
 import { filterOpportunityForRole } from '../../services/permissions.js'
 
@@ -8,7 +8,11 @@ const router = express.Router()
 // Toutes les routes de ce fichier exigent déjà une session (montées derrière requireAuth).
 
 async function opportunitesPourRole(role) {
-  const brutes = await getOpportunities()
+  // Macao pilote : il lui faut le portefeuille complet, y compris les
+  // opportunités pas (encore) cochées « Visible sur écran » — sinon le
+  // compteur « À analyser » et la liste des prioritaires restent vides.
+  // Les autres rôles ne voient que ce qui est publiable sur l'Écran TV.
+  const brutes = role === 'Macao' ? await getAllOpportunities() : await getOpportunities()
   return brutes.map(o => filterOpportunityForRole(o, role)).filter(Boolean)
 }
 
