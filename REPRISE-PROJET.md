@@ -120,6 +120,15 @@ NODE_ENV=production
 PORT
 ```
 
+**Variables optionnelles** (valeurs par défaut codées, à ne définir que pour pointer une autre base) :
+
+```
+AIRTABLE_TABLE_OPPORTUNITES    # défaut : tbl3jvmo4VjUDTkmD
+AIRTABLE_TABLE_POSITIONNEMENTS # défaut : tbllJ1W7jxuTcODwe
+```
+
+Le code lit aussi `RAILWAY_ENVIRONMENT` (posée automatiquement par Railway) pour détecter la production, en complément de `NODE_ENV`.
+
 Sans `JWT_SECRET`, les routes `/api/intranet/*` répondent **503** volontairement — et l'Écran TV continue de fonctionner. C'est un échec bruyant assumé.
 
 ## 8. Déploiements
@@ -169,6 +178,8 @@ Ces problèmes ont coûté du temps. Ils sont documentés pour éviter de les re
 - **`/api/moderation/*`** expose des POST non authentifiés (héritage de l'écran TV, antérieur à l'intranet).
 - **Le token Airtable a un droit d'écriture global** sur la base — Airtable ne permet pas de restreindre par table.
 - **Budgets et échéances vides** dans Airtable : les indicateurs affichent « — ». C'est voulu (un zéro faux serait pire), mais ça se remplit côté données.
+- **Champ Airtable obsolète** : `Métiers déclarés (formulaire)` (`fldDKwfh8BIMia5F9`, texte long) dans la table Coworkers. Il a été remplacé par `Métiers déclarés` (sélection multiple), seul champ que Jotform sait alimenter. Ne pas le supprimer à l'aveugle : vérifier d'abord que le mapping Jotform ne pointe plus dessus, sinon les inscriptions échoueraient.
+- **L'intranet n'est pas utilisable sur téléphone** : la navigation latérale fait 240 px en largeur fixe. Les grilles s'adaptent, pas la coquille. À traiter si un usage mobile est souhaité.
 
 ## 12. Feuille de route
 
