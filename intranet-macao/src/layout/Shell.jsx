@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 const LIENS = [
   { to: '/', libelle: 'Tableau de bord', end: true },
   { to: '/opportunites', libelle: 'Opportunités' },
+  { to: '/dossiers', libelle: 'Dossiers' },
   { to: '/annuaire', libelle: 'Annuaire' },
   { to: '/profil', libelle: 'Mon profil' }
 ]
