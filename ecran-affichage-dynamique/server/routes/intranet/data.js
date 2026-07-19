@@ -125,7 +125,15 @@ router.post('/opportunities/:id/dossier', requireRole('Macao'), async (req, res)
   try {
     const existants = await listDossiers()
     const deja = existants.find(d => (d.opportuniteIds || []).includes(req.params.id))
-    if (deja) return res.status(409).json({ error: 'Un dossier existe déjà', data: enrichir(deja) })
+    // Défense en profondeur : la route est réservée à Macao, mais aucune
+    // réponse du module ne sort sans passer par le filtre de rôle. Le jour où
+    // l'accès s'élargit, rien ici ne fuitera montants ni notes internes.
+    if (deja) {
+      return res.status(409).json({
+        error: 'Un dossier existe déjà',
+        data: filterDossierForRole(enrichir(deja), req.user.role)
+      })
+    }
 
     const opps = await getAllOpportunities()
     const opp = opps.find(o => o.id === req.params.id)
