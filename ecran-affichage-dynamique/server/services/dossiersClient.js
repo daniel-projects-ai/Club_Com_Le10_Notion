@@ -7,6 +7,10 @@ const BASE = process.env.AIRTABLE_BASE_ID || 'appdJ309q39i4Gr8t'
 const TABLE_DOSSIERS = process.env.AIRTABLE_TABLE_DOSSIERS || 'tblp59OuT0dDNFuc1'
 
 async function airtableRequest(chemin, options = {}) {
+  // Sans token, l'appel échouerait en 401 avec un message Airtable opaque :
+  // on préfère une erreur explicite, que l'appelant isole (cf. tableau de bord).
+  if (!TOKEN) throw new Error('AIRTABLE_TOKEN manquant — impossible de lire les dossiers')
+
   const res = await fetch(`https://api.airtable.com/v0/${BASE}/${chemin}`, {
     ...options,
     headers: {

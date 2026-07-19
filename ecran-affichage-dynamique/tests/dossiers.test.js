@@ -1,6 +1,19 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { piecesManquantes, estBloque, filterDossierForRole } from '../server/services/dossiers.js'
+import {
+  piecesManquantes,
+  estBloque,
+  filterDossierForRole,
+  validerChampsDossier
+} from '../server/services/dossiers.js'
+
+// Date locale au format Airtable « AAAA-MM-JJ », décalée de n jours.
+function jourRelatif(n) {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 const base = {
   id: 'recD1',
@@ -75,6 +88,54 @@ test('Macao voit les données commerciales', () => {
   assert.equal(r.niveauRisque, 'Moyen')
 })
 
+// Décalage de fuseau : `new Date('AAAA-MM-JJ')` vaut minuit UTC. Comparé à un
+// instant local, un dossier dû aujourd'hui paraissait déjà dépassé le matin.
+test('une échéance à aujourd\'hui bloque encore', () => {
+  assert.equal(estBloque({ ...base, dateLimite: jourRelatif(0) }), true)
+})
+
+test('une échéance dépassée ne bloque plus', () => {
+  assert.equal(estBloque({ ...base, dateLimite: jourRelatif(-1) }), false)
+})
+
+test('une échéance à exactement 7 jours est dans la fenêtre d\'alerte', () => {
+  assert.equal(estBloque({ ...base, dateLimite: jourRelatif(7) }), true)
+})
+
+test('une échéance à 8 jours est hors fenêtre', () => {
+  assert.equal(estBloque({ ...base, dateLimite: jourRelatif(8) }), false)
+})
+
+test('une heure tardive ne fait pas sortir l\'échéance du jour de la fenêtre', () => {
+  const soir = new Date(2026, 6, 19, 23, 30)
+  assert.equal(estBloque({ ...base, dateLimite: '2026-07-19' }, soir), true)
+})
+
+test('une valeur hors liste est refusée', () => {
+  assert.match(validerChampsDossier({ memoire: 'Inventé' }), /Valeur invalide pour memoire/)
+  assert.match(validerChampsDossier({ offre: 'Presque' }), /Valeur invalide pour offre/)
+  assert.match(validerChampsDossier({ depot: 'Envoyé' }), /Valeur invalide pour depot/)
+  assert.match(validerChampsDossier({ statut: 'Nouveau' }), /Valeur invalide pour statut/)
+})
+
+test('les valeurs des listes fermées sont acceptées', () => {
+  assert.equal(
+    validerChampsDossier({ memoire: 'Finalisé', offre: 'Validée', depot: 'Déposé', statut: 'Prêt à déposer' }),
+    null
+  )
+})
+
+test('chaque pièce fournie est validée, le tableau vide est légitime', () => {
+  assert.equal(validerChampsDossier({ piecesFournies: [] }), null)
+  assert.equal(validerChampsDossier({ piecesFournies: ['Kbis', 'Acte d’engagement'] }), null)
+  assert.match(validerChampsDossier({ piecesFournies: ['Kbis', 'Faux'] }), /Pièce inconnue : Faux/)
+  assert.match(validerChampsDossier({ piecesFournies: 'Kbis' }), /doit être un tableau/)
+})
+
+test('un corps sans champ contrôlé ne déclenche aucune erreur', () => {
+  assert.equal(validerChampsDossier({}), null)
+})
+
 test('un Coworker ne reçoit ni montant, ni notes, ni retours, ni risque', () => {
   const r = filterDossierForRole(base, 'Coworker')
   assert.equal(r.montantPropose, undefined)
@@ -90,6 +151,30 @@ test('un Freelance est traité comme un Coworker', () => {
     filterDossierForRole(base, 'Freelance'),
     filterDossierForRole(base, 'Coworker')
   )
+})
+
+// Liste blanche : un champ ajouté demain ne doit pas fuiter par défaut.
+test('un champ non listé n\'atteint pas un Coworker', () => {
+  const r = filterDossierForRole(
+    { ...base, nouveauChampSensible: 'marge nette', checklist: 'interne' },
+    'Coworker'
+  )
+  assert.equal(r.nouveauChampSensible, undefined)
+  assert.equal(r.checklist, undefined)
+})
+
+test('Macao reçoit aussi les champs non listés', () => {
+  const r = filterDossierForRole({ ...base, nouveauChampSensible: 'marge nette' }, 'Macao')
+  assert.equal(r.nouveauChampSensible, 'marge nette')
+})
+
+test('acheteur et équipe résolus atteignent un Coworker', () => {
+  const r = filterDossierForRole(
+    { ...base, acheteur: 'Grand Villeneuvois', equipe: ['Alice', 'Bob'] },
+    'Coworker'
+  )
+  assert.equal(r.acheteur, 'Grand Villeneuvois')
+  assert.deepEqual(r.equipe, ['Alice', 'Bob'])
 })
 
 test('un rôle inconnu ne reçoit rien', () => {

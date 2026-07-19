@@ -14,7 +14,13 @@ import {
   supprimerPositionnement
 } from '../../services/positionnementsClient.js'
 import { listDossiers, getDossier, creerDossier, majDossier } from '../../services/dossiersClient.js'
-import { piecesManquantes, estBloque, filterDossierForRole } from '../../services/dossiers.js'
+import {
+  piecesManquantes,
+  estBloque,
+  filterDossierForRole,
+  joursAvantEcheance,
+  validerChampsDossier
+} from '../../services/dossiers.js'
 
 const router = express.Router()
 
@@ -22,6 +28,39 @@ const router = express.Router()
 // les pièces manquantes et l'alerte de blocage.
 function enrichir(d) {
   return { ...d, piecesManquantes: piecesManquantes(d), bloque: estBloque(d) }
+}
+
+// Index acheteurs / coworkers chargés UNE fois par requête : la résolution des
+// liens se fait ensuite en mémoire, jamais un appel Airtable par dossier.
+async function chargerIndexLiens() {
+  let acheteurParOpportunite = new Map()
+  let nomParCoworker = new Map()
+
+  try {
+    const opps = await getAllOpportunities()
+    acheteurParOpportunite = new Map(opps.map(o => [o.id, o.client || null]))
+  } catch (err) {
+    console.error('❌ acheteurs (résolution):', err.message)
+  }
+
+  try {
+    const cw = await listActiveCoworkers()
+    nomParCoworker = new Map(cw.map(c => [c.id, c.nom]))
+  } catch (err) {
+    console.error('❌ équipe (résolution):', err.message)
+  }
+
+  return { acheteurParOpportunite, nomParCoworker }
+}
+
+// Résout les identifiants bruts en noms affichables. Un lien non résolu vaut
+// null / [] : la fiche s'affiche quand même.
+function resoudreLiens(d, { acheteurParOpportunite, nomParCoworker }) {
+  const acheteur = (d.opportuniteIds || [])
+    .map(id => acheteurParOpportunite.get(id))
+    .find(Boolean) || null
+  const equipe = (d.equipeIds || []).map(id => nomParCoworker.get(id)).filter(Boolean)
+  return { ...d, acheteur, equipe }
 }
 
 // Toutes les routes de ce fichier exigent déjà une session (montées derrière requireAuth).
@@ -166,9 +205,11 @@ router.get('/dossiers', async (req, res) => {
       ? tous
       : tous.filter(d => (d.equipeIds || []).includes(req.user.id))
 
+    const index = await chargerIndexLiens()
+
     res.json({
       data: visibles
-        .map(d => filterDossierForRole(enrichir(d), req.user.role))
+        .map(d => filterDossierForRole(resoudreLiens(enrichir(d), index), req.user.role))
         .filter(Boolean)
     })
   } catch (err) {
@@ -187,7 +228,8 @@ router.get('/dossiers/:id', async (req, res) => {
       return res.status(403).json({ error: 'Accès refusé' })
     }
 
-    res.json({ data: filterDossierForRole(enrichir(d), req.user.role) })
+    const index = await chargerIndexLiens()
+    res.json({ data: filterDossierForRole(resoudreLiens(enrichir(d), index), req.user.role) })
   } catch (err) {
     console.error('❌ dossier:', err.message)
     // Airtable signale un identifiant inconnu par un 404 : c'est une erreur
@@ -210,6 +252,12 @@ router.patch('/dossiers/:id', requireRole('Macao'), async (req, res) => {
     statut: 'Statut dossier',
     piecesFournies: 'Pièces fournies'
   }
+
+  // La liste blanche ne contrôle que les NOMS de champs. Airtable étant appelé
+  // avec `typecast: true`, une valeur inconnue créerait une option au lieu
+  // d'être rejetée : on valide donc les valeurs avant tout appel réseau.
+  const erreur = validerChampsDossier(req.body || {})
+  if (erreur) return res.status(400).json({ error: erreur })
 
   const champs = {}
   for (const [cle, colonne] of Object.entries(AUTORISES)) {
@@ -285,17 +333,25 @@ router.get('/dashboard', async (req, res) => {
       parStatut[s] = (parStatut[s] || 0) + 1
     })
 
-    // Indicateurs dossiers : uniquement pour Macao.
-    const dossiers = (await listDossiers()).map(enrichir)
-    const dansSeptJours = Date.now() + 7 * 86400000
-    const dossiersEnCours = dossiers.filter(d => d.resultat === 'En cours').length
-    const aDeposer = dossiers.filter(d => {
-      if (!d.dateLimite) return false
-      const t = new Date(d.dateLimite).getTime()
-      return t >= Date.now() && t <= dansSeptJours &&
-             !['Déposé', 'Accusé reçu'].includes(d.depot)
-    }).length
-    const dossiersBloques = dossiers.filter(d => d.bloque).length
+    // Indicateurs dossiers : uniquement pour Macao. Isolés du reste du tableau
+    // de bord — une panne sur cette table (droits, 5xx) ne doit pas vider la
+    // page d'accueil : les compteurs valent null et s'affichent « — ».
+    let dossiersEnCours = null
+    let aDeposer = null
+    let dossiersBloques = null
+    try {
+      const dossiers = (await listDossiers()).map(enrichir)
+      dossiersEnCours = dossiers.filter(d => d.resultat === 'En cours').length
+      aDeposer = dossiers.filter(d => {
+        // Comparaison en journées : une échéance du jour reste « à déposer ».
+        const jours = joursAvantEcheance(d.dateLimite)
+        return jours !== null && jours >= 0 && jours <= 7 &&
+               !['Déposé', 'Accusé reçu'].includes(d.depot)
+      }).length
+      dossiersBloques = dossiers.filter(d => d.bloque).length
+    } catch (err) {
+      console.error('❌ indicateurs dossiers:', err.message)
+    }
 
     res.json({
       data: {
