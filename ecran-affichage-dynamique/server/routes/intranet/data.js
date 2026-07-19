@@ -13,8 +13,16 @@ import {
   creerPositionnement,
   supprimerPositionnement
 } from '../../services/positionnementsClient.js'
+import { listDossiers, getDossier, creerDossier, majDossier } from '../../services/dossiersClient.js'
+import { piecesManquantes, estBloque, filterDossierForRole } from '../../services/dossiers.js'
 
 const router = express.Router()
+
+// Enrichit chaque dossier de ce que le front recalculerait sinon :
+// les pièces manquantes et l'alerte de blocage.
+function enrichir(d) {
+  return { ...d, piecesManquantes: piecesManquantes(d), bloque: estBloque(d) }
+}
 
 // Toutes les routes de ce fichier exigent déjà une session (montées derrière requireAuth).
 
@@ -112,6 +120,108 @@ router.get('/opportunities/:id/positionnements', requireRole('Macao'), async (re
   }
 })
 
+// POST /api/intranet/opportunities/:id/dossier — créer le dossier (Macao)
+router.post('/opportunities/:id/dossier', requireRole('Macao'), async (req, res) => {
+  try {
+    const existants = await listDossiers()
+    const deja = existants.find(d => (d.opportuniteIds || []).includes(req.params.id))
+    if (deja) return res.status(409).json({ error: 'Un dossier existe déjà', data: enrichir(deja) })
+
+    const opps = await getAllOpportunities()
+    const opp = opps.find(o => o.id === req.params.id)
+    if (!opp) return res.status(404).json({ error: 'Opportunité introuvable' })
+
+    const champs = {
+      'Nom du dossier': opp.name,
+      'Opportunité liée': [opp.id],
+      'Statut dossier': 'En préparation',
+      'Résultat': 'En cours'
+    }
+    // Une opportunité sans date limite ne doit pas envoyer la clé du tout :
+    // Airtable rejette une valeur nulle sur un champ date.
+    if (opp.deadline) champs['Date limite'] = opp.deadline
+
+    const cree = await creerDossier(champs)
+    res.json({ data: enrichir(cree) })
+  } catch (err) {
+    console.error('❌ création dossier:', err.message)
+    res.status(500).json({ error: 'Impossible de créer le dossier' })
+  }
+})
+
+// GET /api/intranet/dossiers
+// Macao voit tout ; un coworker ne voit que les dossiers où il est mobilisé.
+router.get('/dossiers', async (req, res) => {
+  try {
+    const tous = await listDossiers()
+    const visibles = req.user.role === 'Macao'
+      ? tous
+      : tous.filter(d => (d.equipeIds || []).includes(req.user.id))
+
+    res.json({
+      data: visibles
+        .map(d => filterDossierForRole(enrichir(d), req.user.role))
+        .filter(Boolean)
+    })
+  } catch (err) {
+    console.error('❌ dossiers:', err.message)
+    res.status(500).json({ error: 'Erreur de chargement' })
+  }
+})
+
+// GET /api/intranet/dossiers/:id
+router.get('/dossiers/:id', async (req, res) => {
+  try {
+    const d = await getDossier(req.params.id)
+
+    // Un coworker non mobilisé se voit refuser l'accès côté serveur.
+    if (req.user.role !== 'Macao' && !(d.equipeIds || []).includes(req.user.id)) {
+      return res.status(403).json({ error: 'Accès refusé' })
+    }
+
+    res.json({ data: filterDossierForRole(enrichir(d), req.user.role) })
+  } catch (err) {
+    console.error('❌ dossier:', err.message)
+    // Airtable signale un identifiant inconnu par un 404 : c'est une erreur
+    // d'appel, pas une panne serveur.
+    if (/NOT_FOUND|HTTP 404/i.test(err.message)) {
+      return res.status(404).json({ error: 'Dossier introuvable' })
+    }
+    res.status(500).json({ error: 'Erreur de chargement' })
+  }
+})
+
+// PATCH /api/intranet/dossiers/:id — faire avancer un chantier (Macao)
+router.patch('/dossiers/:id', requireRole('Macao'), async (req, res) => {
+  // Liste blanche : le client ne peut modifier que ces champs, jamais les
+  // montants ou les notes, qui se saisissent dans Airtable.
+  const AUTORISES = {
+    memoire: 'Mémoire technique',
+    offre: 'Offre financière',
+    depot: 'Dépôt',
+    statut: 'Statut dossier',
+    piecesFournies: 'Pièces fournies'
+  }
+
+  const champs = {}
+  for (const [cle, colonne] of Object.entries(AUTORISES)) {
+    // On teste `undefined` et non la véracité : `piecesFournies: []` (tout
+    // décocher) est une modification légitime.
+    if (req.body?.[cle] !== undefined) champs[colonne] = req.body[cle]
+  }
+  if (!Object.keys(champs).length) {
+    return res.status(400).json({ error: 'Aucun champ modifiable fourni' })
+  }
+
+  try {
+    const maj = await majDossier(req.params.id, champs)
+    res.json({ data: enrichir(maj) })
+  } catch (err) {
+    console.error('❌ maj dossier:', err.message)
+    res.status(500).json({ error: 'Impossible de mettre à jour le dossier' })
+  }
+})
+
 // GET /api/intranet/directory
 router.get('/directory', async (req, res) => {
   try {
@@ -167,10 +277,25 @@ router.get('/dashboard', async (req, res) => {
       parStatut[s] = (parStatut[s] || 0) + 1
     })
 
+    // Indicateurs dossiers : uniquement pour Macao.
+    const dossiers = (await listDossiers()).map(enrichir)
+    const dansSeptJours = Date.now() + 7 * 86400000
+    const dossiersEnCours = dossiers.filter(d => d.resultat === 'En cours').length
+    const aDeposer = dossiers.filter(d => {
+      if (!d.dateLimite) return false
+      const t = new Date(d.dateLimite).getTime()
+      return t >= Date.now() && t <= dansSeptJours &&
+             !['Déposé', 'Accusé reçu'].includes(d.depot)
+    }).length
+    const dossiersBloques = dossiers.filter(d => d.bloque).length
+
     res.json({
       data: {
         ...base,
         aAnalyser: opps.filter(o => o.status === 'À analyser').length,
+        dossiersEnCours,
+        aDeposer,
+        dossiersBloques,
         parStatut,
         // Les mieux notées d'abord : c'est ce qui mérite l'attention.
         prioritaires: [...opps]
