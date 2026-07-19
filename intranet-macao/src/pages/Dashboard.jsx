@@ -27,8 +27,9 @@ export default function Dashboard() {
       ]
 
   // StatBand attend un nom de couleur (terra/gold/teal/ink), pas un code hexadécimal.
+  // `|| null` sur les trois : la convention du bandeau veut « — » et jamais « 0 ».
   const statsDossiers = [
-    { label: 'Dossiers en cours', valeur: donnees.dossiersEnCours ?? null, couleur: 'teal' },
+    { label: 'Dossiers en cours', valeur: donnees.dossiersEnCours || null, couleur: 'teal' },
     { label: 'À déposer sous 7 j', valeur: donnees.aDeposer || null, couleur: 'gold' },
     { label: 'Dossiers bloqués', valeur: donnees.dossiersBloques || null, couleur: 'terra' }
   ]

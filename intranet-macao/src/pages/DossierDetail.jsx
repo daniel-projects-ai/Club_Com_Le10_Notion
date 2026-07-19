@@ -58,9 +58,23 @@ export default function DossierDetail() {
     setErreur(null)
     try {
       const { data } = await api.majDossier(id, champs)
-      setD(data)
-    } catch {
-      setErreur('La modification n’a pas pu être enregistrée.')
+      // Le PATCH ne renvoie ni `acheteur` ni `equipe` (ils viennent de
+      // l'opportunité liée) : on fusionne pour ne pas les effacer de l'écran.
+      setD((precedent) => ({
+        ...data,
+        acheteur: precedent?.acheteur ?? null,
+        equipe: precedent?.equipe ?? []
+      }))
+    } catch (e) {
+      // Le serveur renvoie un message explicite (400 sur valeur hors liste) :
+      // il aide bien plus que le générique. `appel()` retombe sur les sentinelles
+      // « Erreur » / « NON_AUTHENTIFIE », qui n'apprennent rien à l'utilisateur.
+      const message = e?.message
+      setErreur(
+        message && message !== 'Erreur' && message !== 'NON_AUTHENTIFIE'
+          ? message
+          : 'La modification n’a pas pu être enregistrée.'
+      )
     } finally {
       setEnCours(false)
     }
@@ -92,6 +106,10 @@ export default function DossierDetail() {
     )
   }
 
+  // `equipe` peut manquer selon le rôle ou la réponse d'une écriture : on
+  // normalise une fois pour que l'affichage n'ait pas à s'en préoccuper.
+  const equipe = Array.isArray(d.equipe) ? d.equipe : []
+
   return (
     <div className="p-10 max-w-5xl">
       <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les dossiers</Link>
@@ -105,7 +123,7 @@ export default function DossierDetail() {
         )}
       </div>
       <p className="text-macao-ink/60 mb-8">
-        Échéance {formaterDate(d.dateLimite)} · Statut {ouTiret(d.statut)}
+        Échéance {formaterDate(d.dateLimite)} · Statut {ouTiret(d.statut)} · Acheteur {ouTiret(d.acheteur)}
       </p>
 
       {erreur && <p className="text-macao-terra text-sm mb-4">{erreur}</p>}
@@ -141,6 +159,24 @@ export default function DossierDetail() {
           onBasculer={estMacao ? basculerPiece : null}
           enCours={enCours}
         />
+      </section>
+
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <h2 className="font-serif text-xl text-macao-ink mb-4">Équipe mobilisée</h2>
+        {equipe.length === 0 ? (
+          <p className="text-sm text-macao-ink/55">Personne n’est encore mobilisé sur ce dossier.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {equipe.map((nom, i) => (
+              <li
+                key={`${nom}-${i}`}
+                className="rounded-full bg-cream-soft px-3 py-1 text-sm text-macao-ink"
+              >
+                {nom}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="bg-white rounded-xl p-6">

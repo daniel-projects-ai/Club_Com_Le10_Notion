@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
-import { formaterDate } from '../lib/format'
+import { formaterDate, ouTiret } from '../lib/format'
 
 export default function Dossiers() {
   const { user } = useAuth()
@@ -49,6 +49,7 @@ export default function Dossiers() {
 
             <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
               <span><span className="text-macao-ink/50">Statut </span><b>{d.statut || '—'}</b></span>
+              <span><span className="text-macao-ink/50">Acheteur </span><b>{ouTiret(d.acheteur)}</b></span>
               <span><span className="text-macao-ink/50">Échéance </span><b>{formaterDate(d.dateLimite)}</b></span>
               <span>
                 <span className="text-macao-ink/50">Pièces </span>

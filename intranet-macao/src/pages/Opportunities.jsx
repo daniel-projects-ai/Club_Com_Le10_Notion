@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
@@ -89,7 +89,7 @@ const STATUTS_AVEC_DOSSIER = ['GO', 'Transmis au Club', 'En réponse']
 // Création du dossier de réponse — réservé à Macao (le serveur renvoie 403 aux autres).
 // L'état vit dans le composant, donc par carte : une erreur sur l'opportunité A
 // ne peut pas s'afficher sous l'opportunité B.
-function BoutonCreerDossier({ opp }) {
+function BoutonCreerDossier({ opp, onCree }) {
   const navigate = useNavigate()
   const [enCours, setEnCours] = useState(false)
   const [erreur, setErreur] = useState(null)
@@ -99,6 +99,9 @@ function BoutonCreerDossier({ opp }) {
     setErreur(null)
     try {
       const { data } = await api.creerDossier(opp.id)
+      // On enregistre la correspondance avant de partir : au retour arrière,
+      // la carte affiche le lien vers le dossier et non le bouton de création.
+      onCree?.(data.id)
       navigate(`/dossiers/${data.id}`)
     } catch (e) {
       // `appel` ne remonte pas le code HTTP : on distingue le 409 par le
@@ -244,6 +247,28 @@ export default function Opportunities() {
     setOpportunites((liste) => liste.map(o => (o.id === id ? { ...o, ...champs } : o)))
   }
 
+  // Correspondance opportunité → dossier existant, pour ne pas proposer une
+  // création qui échouerait en 409. Seul Macao voit ces boutons : inutile de
+  // faire porter l'appel aux autres rôles.
+  const [dossiersParOpportunite, setDossiersParOpportunite] = useState({})
+  useEffect(() => {
+    if (!estMacao) return
+    let annule = false
+    api.dossiers()
+      .then(({ data }) => {
+        if (annule) return
+        const correspondance = {}
+        for (const dossier of data || []) {
+          for (const oppId of dossier.opportuniteIds || []) correspondance[oppId] = dossier.id
+        }
+        setDossiersParOpportunite(correspondance)
+      })
+      // Un incident sur les dossiers ne doit pas rendre la page inutilisable :
+      // on retombe silencieusement sur le bouton de création partout.
+      .catch(() => {})
+    return () => { annule = true }
+  }, [estMacao])
+
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
   if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les opportunités : {erreur}</p>
 
@@ -279,7 +304,22 @@ export default function Opportunities() {
               <div className="mt-5 flex flex-wrap items-start gap-3">
                 <BoutonInteret opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
                 {estMacao && STATUTS_AVEC_DOSSIER.includes(opp.status) && (
-                  <BoutonCreerDossier opp={opp} />
+                  dossiersParOpportunite[opp.id]
+                    ? (
+                      <Link
+                        to={`/dossiers/${dossiersParOpportunite[opp.id]}`}
+                        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+                      >
+                        Voir le dossier de réponse
+                      </Link>
+                    )
+                    : (
+                      <BoutonCreerDossier
+                        opp={opp}
+                        onCree={(dossierId) =>
+                          setDossiersParOpportunite((c) => ({ ...c, [opp.id]: dossierId }))}
+                      />
+                    )
                 )}
               </div>
 
