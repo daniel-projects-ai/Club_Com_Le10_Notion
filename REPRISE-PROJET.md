@@ -80,6 +80,9 @@ Club_Com_Le10_Notion/
 | Positionnements | `tbllJ1W7jxuTcODwe` |
 | Commentaires | `tblvkQvlOW9CdKEPm` |
 | Contacts | `tblddrQJJgmh0FW21` |
+| Dossiers de réponse | `tblp59OuT0dDNFuc1` |
+
+⚠️ **La table Dossiers de réponse s'écrit par *nom* de champ**, contrairement aux autres. Elle a été créée après le reste du code et ses identifiants de colonnes ne sont pas figés en dur. Conséquence : **renommer une colonne dans Airtable cassera l'écriture**. Les valeurs des listes fermées (`ETATS_MEMOIRE`, `ETATS_OFFRE`, `ETATS_DEPOT`, `STATUTS_DOSSIER`, `PIECES` dans `server/services/dossiers.js`) doivent elles aussi rester identiques aux options de la table — le serveur valide contre ces listes avant d'écrire. Noter que `Acte d’engagement` utilise une apostrophe typographique (U+2019).
 
 **Champs dont l'ID est utilisé en dur dans le code** (écriture par ID pour survivre à un renommage) :
 
@@ -186,7 +189,9 @@ Ces problèmes ont coûté du temps. Ils sont documentés pour éviter de les re
 Le séquencement validé avec le client :
 
 1. ✅ **Portail intranet** — authentification, tableaux de bord par rôle, positionnements
-2. 🔲 **Dossiers de réponse** — pièces à fournir, qui rédige quoi, échéances, dépôt
+2. ✅ **Dossiers de réponse** — trois chantiers parallèles (mémoire technique, offre financière, dépôt), check-list des pièces demandées vs fournies, accès limité aux coworkers mobilisés
+   *Spec : `docs/superpowers/specs/2026-07-19-dossiers-de-reponse-design.md` · Plan : `docs/superpowers/plans/2026-07-19-dossiers-de-reponse.md`*
+   **Dette connue** : le champ `Références utilisées` est un texte provisoire, à convertir en liaison lors du module 3. Un dossier dont l'échéance est **dépassée** n'apparaît dans aucune alerte — choix de la spec, à réexaminer.
 3. 🔲 **Clients / CRM et références** — historique par acheteur, bibliothèque de références réutilisables
 4. 🔲 **Facturation et rentabilité** — devis, factures, marge par projet
 
