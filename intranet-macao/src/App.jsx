@@ -5,6 +5,8 @@ import Login from './pages/Login'
 import Verify from './pages/Verify'
 import Dashboard from './pages/Dashboard'
 import Opportunities from './pages/Opportunities'
+import Dossiers from './pages/Dossiers'
+import DossierDetail from './pages/DossierDetail'
 import Directory from './pages/Directory'
 import Profile from './pages/Profile'
 
@@ -27,6 +29,8 @@ export default function App() {
           <Route element={<Protege />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/opportunites" element={<Opportunities />} />
+            <Route path="/dossiers" element={<Dossiers />} />
+            <Route path="/dossiers/:id" element={<DossierDetail />} />
             <Route path="/annuaire" element={<Directory />} />
             <Route path="/profil" element={<Profile />} />
           </Route>

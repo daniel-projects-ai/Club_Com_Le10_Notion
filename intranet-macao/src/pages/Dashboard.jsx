@@ -26,6 +26,13 @@ export default function Dashboard() {
         { label: 'Échéances sous 30 j', valeur: donnees.echeancesProches || null, couleur: 'teal' }
       ]
 
+  // StatBand attend un nom de couleur (terra/gold/teal/ink), pas un code hexadécimal.
+  const statsDossiers = [
+    { label: 'Dossiers en cours', valeur: donnees.dossiersEnCours ?? null, couleur: 'teal' },
+    { label: 'À déposer sous 7 j', valeur: donnees.aDeposer || null, couleur: 'gold' },
+    { label: 'Dossiers bloqués', valeur: donnees.dossiersBloques || null, couleur: 'terra' }
+  ]
+
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
       <header className="mb-8">
@@ -36,6 +43,15 @@ export default function Dashboard() {
       </header>
 
       <StatBand stats={stats} />
+
+      {estMacao && (
+        <section className="mt-10">
+          <h2 className="font-serif text-xl text-macao-ink">Dossiers de réponse</h2>
+          <div className="mt-4">
+            <StatBand stats={statsDossiers} />
+          </div>
+        </section>
+      )}
 
       {estMacao ? (
         <>

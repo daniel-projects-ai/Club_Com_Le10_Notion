@@ -139,6 +139,7 @@ export default function DossierDetail() {
           demandees={d.piecesDemandees}
           fournies={d.piecesFournies}
           onBasculer={estMacao ? basculerPiece : null}
+          enCours={enCours}
         />
       </section>
 

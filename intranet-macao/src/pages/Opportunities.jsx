@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
@@ -77,6 +78,52 @@ function BoutonInteret({ opp, onChange }) {
         <span className="ml-2 text-2xs text-neutral-400">Cliquez à nouveau pour retirer</span>
       )}
       {erreur && <p className="mt-1 text-2xs text-macao-terra">Échec : {erreur}</p>}
+    </div>
+  )
+}
+
+// Un dossier de réponse ne se justifie qu'une fois la décision de répondre prise :
+// inutile de proposer la création sur une opportunité encore à analyser ou abandonnée.
+const STATUTS_AVEC_DOSSIER = ['GO', 'Transmis au Club', 'En réponse']
+
+// Création du dossier de réponse — réservé à Macao (le serveur renvoie 403 aux autres).
+// L'état vit dans le composant, donc par carte : une erreur sur l'opportunité A
+// ne peut pas s'afficher sous l'opportunité B.
+function BoutonCreerDossier({ opp }) {
+  const navigate = useNavigate()
+  const [enCours, setEnCours] = useState(false)
+  const [erreur, setErreur] = useState(null)
+
+  const creer = async () => {
+    setEnCours(true)
+    setErreur(null)
+    try {
+      const { data } = await api.creerDossier(opp.id)
+      navigate(`/dossiers/${data.id}`)
+    } catch (e) {
+      // `appel` ne remonte pas le code HTTP : on distingue le 409 par le
+      // message renvoyé par le serveur (« Un dossier existe déjà »).
+      setErreur(
+        /dossier existe d[ée]j[àa]/i.test(e.message || '')
+          ? 'Un dossier existe déjà pour cette opportunité'
+          : 'La création a échoué'
+      )
+    } finally {
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={creer}
+        disabled={enCours}
+        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
+      >
+        {enCours ? 'Création…' : 'Créer le dossier de réponse'}
+      </button>
+      {erreur && <p className="mt-1 text-2xs text-macao-terra">{erreur}</p>}
     </div>
   )
 }
@@ -229,8 +276,11 @@ export default function Opportunities() {
                 <Champ label="Territoire" valeur={ouTiret(opp.territoire)} />
               </div>
 
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap items-start gap-3">
                 <BoutonInteret opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
+                {estMacao && STATUTS_AVEC_DOSSIER.includes(opp.status) && (
+                  <BoutonCreerDossier opp={opp} />
+                )}
               </div>
 
               {estMacao && <BlocPositionnements opportuniteId={opp.id} />}
