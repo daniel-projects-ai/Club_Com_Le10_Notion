@@ -8,6 +8,8 @@ import Opportunities from './pages/Opportunities'
 import Dossiers from './pages/Dossiers'
 import DossierDetail from './pages/DossierDetail'
 import Directory from './pages/Directory'
+import Organisations from './pages/Organisations'
+import OrganisationDetail from './pages/OrganisationDetail'
 import Profile from './pages/Profile'
 
 // Garde d'authentification : tant que la session n'est pas résolue,
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="/opportunites" element={<Opportunities />} />
             <Route path="/dossiers" element={<Dossiers />} />
             <Route path="/dossiers/:id" element={<DossierDetail />} />
+            <Route path="/organisations" element={<Organisations />} />
+            <Route path="/organisations/:id" element={<OrganisationDetail />} />
             <Route path="/annuaire" element={<Directory />} />
             <Route path="/profil" element={<Profile />} />
           </Route>

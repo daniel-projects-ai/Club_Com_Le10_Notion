@@ -19,7 +19,8 @@ export default function Dashboard() {
         { label: 'Opportunités actives', valeur: donnees.totalOpportunites, couleur: 'terra' },
         { label: 'À analyser', valeur: donnees.aAnalyser, couleur: 'gold' },
         { label: 'Échéances sous 30 j', valeur: donnees.echeancesProches || null, couleur: 'teal' },
-        { label: 'Opportunités notées', valeur: donnees.prioritaires?.length || null, couleur: 'ink' }
+        { label: 'Opportunités notées', valeur: donnees.prioritaires?.length || null, couleur: 'ink' },
+        { label: 'Sans organisation', valeur: donnees.sansOrganisation || null, couleur: 'gold' }
       ]
     : [
         { label: 'Opportunités ouvertes', valeur: donnees.totalOpportunites, couleur: 'terra' },
