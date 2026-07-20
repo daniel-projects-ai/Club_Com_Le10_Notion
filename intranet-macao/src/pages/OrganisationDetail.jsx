@@ -72,6 +72,7 @@ export default function OrganisationDetail() {
   const historique = o.historique || {}
   const interlocuteurs = Array.isArray(o.interlocuteurs) ? o.interlocuteurs : []
   const opportunites = Array.isArray(o.opportunites) ? o.opportunites : []
+  const dossiers = Array.isArray(o.dossiers) ? o.dossiers : []
 
   return (
     <div className="p-10 max-w-5xl">
@@ -146,6 +147,32 @@ export default function OrganisationDetail() {
         )}
       </section>
 
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <h2 className="font-serif text-xl text-macao-ink mb-4">Dossiers de réponse</h2>
+        {dossiers.length === 0 ? (
+          <p className="text-sm text-macao-ink/55">Aucun dossier de réponse.</p>
+        ) : (
+          <ul className="space-y-3">
+            {dossiers.map((d, index) => (
+              <li
+                key={d.id || `dossier-${index}`}
+                className="flex flex-wrap gap-x-8 gap-y-1 border-b border-macao-ink/10 pb-3 last:border-0 last:pb-0"
+              >
+                <span className="text-macao-ink">{ouTiret(d.nom)}</span>
+                <span className="text-sm">
+                  <span className="text-macao-ink/50">Statut </span>
+                  <b>{ouTiret(d.statut)}</b>
+                </span>
+                <span className="text-sm">
+                  <span className="text-macao-ink/50">Résultat </span>
+                  <b>{ouTiret(d.resultat)}</b>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section className="bg-white rounded-xl p-6">
         <h2 className="font-serif text-xl text-macao-ink mb-4">Informations</h2>
         <div className="space-y-3">
@@ -158,6 +185,7 @@ export default function OrganisationDetail() {
             ['Origine', ouTiret(o.origine)],
             ['Référent Macao', ouTiret(o.referent)],
             ['Dernier échange', formaterDate(o.dernierEchange)],
+            ['Dernière opportunité', formaterDate(historique.derniereOpportunite)],
             ['Plateforme', ouTiret(o.plateforme)],
             ['Particularités', ouTiret(o.particularites)],
             ['Notes', ouTiret(o.notes)]

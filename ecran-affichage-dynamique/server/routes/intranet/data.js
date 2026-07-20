@@ -287,7 +287,10 @@ router.patch('/dossiers/:id', requireRole('Macao'), async (req, res) => {
 // Contexte CRM chargé UNE fois par requête (même principe que chargerIndexLiens) :
 // les rattachements organisation → opportunités → dossiers se font ensuite en
 // mémoire, jamais un appel Airtable par organisation.
-async function chargerContexteCrm() {
+// `avecInterlocuteurs` vaut true par défaut : un appelant qui oublie l'option
+// obtient le contexte complet plutôt qu'une fiche amputée. Seule la route liste,
+// qui n'affiche pas les interlocuteurs, s'en dispense explicitement.
+async function chargerContexteCrm({ avecInterlocuteurs = true } = {}) {
   // getAllOpportunities absorbe déjà ses propres pannes et renvoie [].
   const opportunites = await getAllOpportunities()
   const oppParId = new Map(opportunites.map(o => [o.id, o]))
@@ -302,10 +305,12 @@ async function chargerContexteCrm() {
   }
 
   let interlocuteurs = []
-  try {
-    interlocuteurs = await listInterlocuteurs()
-  } catch (err) {
-    console.error('❌ CRM (interlocuteurs):', err.message)
+  if (avecInterlocuteurs) {
+    try {
+      interlocuteurs = await listInterlocuteurs()
+    } catch (err) {
+      console.error('❌ CRM (interlocuteurs):', err.message)
+    }
   }
 
   return { oppParId, dossiers, interlocuteurs }
@@ -327,7 +332,8 @@ function rattacher(organisation, { oppParId, dossiers }) {
 router.get('/organisations', requireRole('Macao'), async (req, res) => {
   try {
     const organisations = await listOrganisations()
-    const contexte = await chargerContexteCrm()
+    // La liste n'affiche pas les interlocuteurs : inutile d'appeler cette table.
+    const contexte = await chargerContexteCrm({ avecInterlocuteurs: false })
 
     res.json({
       data: organisations
@@ -458,14 +464,10 @@ router.get('/dashboard', async (req, res) => {
 
     // Seul garde-fou contre la dégradation silencieuse du CRM : une opportunité
     // créée sans organisation rattachée n'apparaît dans aucune fiche et sortirait
-    // de l'historique sans que personne ne s'en aperçoive. Isolé comme les
-    // indicateurs dossiers : une panne ne doit jamais rendre blanche la page d'accueil.
-    let sansOrganisation = null
-    try {
-      sansOrganisation = opps.filter(o => !(o.organisationIds || []).length).length
-    } catch (err) {
-      console.error('❌ indicateur sansOrganisation:', err.message)
-    }
+    // de l'historique sans que personne ne s'en aperçoive. Contrairement aux
+    // indicateurs dossiers, ce calcul n'appelle pas Airtable : il compte en mémoire
+    // des opportunités déjà chargées, donc rien à isoler ici.
+    const sansOrganisation = opps.filter(o => !(o.organisationIds || []).length).length
 
     res.json({
       data: {

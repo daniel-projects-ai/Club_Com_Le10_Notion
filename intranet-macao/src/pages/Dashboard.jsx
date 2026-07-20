@@ -20,7 +20,10 @@ export default function Dashboard() {
         { label: 'À analyser', valeur: donnees.aAnalyser, couleur: 'gold' },
         { label: 'Échéances sous 30 j', valeur: donnees.echeancesProches || null, couleur: 'teal' },
         { label: 'Opportunités notées', valeur: donnees.prioritaires?.length || null, couleur: 'ink' },
-        { label: 'Sans organisation', valeur: donnees.sansOrganisation || null, couleur: 'gold' }
+        // Seule dérogation à la convention « — plutôt que 0 » : ici zéro n'est pas
+        // une absence de données mais l'état visé (toutes les opportunités sont
+        // rattachées). `??` le laisse passer et ne réserve « — » qu'à l'indicateur absent.
+        { label: 'Sans organisation', valeur: donnees.sansOrganisation ?? null, couleur: 'gold' }
       ]
     : [
         { label: 'Opportunités ouvertes', valeur: donnees.totalOpportunites, couleur: 'terra' },
