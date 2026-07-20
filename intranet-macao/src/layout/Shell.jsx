@@ -1,10 +1,14 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+// `role` est facultatif : sans lui, l'entrée reste visible pour tous les rôles.
+// Le CRM renvoie 403 aux non-Macao — un lien qui mène à une erreur est un défaut
+// d'interface, on le masque donc plutôt que de laisser l'utilisateur s'y heurter.
 const LIENS = [
   { to: '/', libelle: 'Tableau de bord', end: true },
   { to: '/opportunites', libelle: 'Opportunités' },
   { to: '/dossiers', libelle: 'Dossiers' },
+  { to: '/organisations', libelle: 'Organisations', role: 'Macao' },
   { to: '/annuaire', libelle: 'Annuaire' },
   { to: '/profil', libelle: 'Mon profil' }
 ]
@@ -30,7 +34,7 @@ export default function Shell() {
         </div>
 
         <div className="flex-1 py-2">
-          {LIENS.map((lien) => (
+          {LIENS.filter((lien) => !lien.role || lien.role === user?.role).map((lien) => (
             <NavLink key={lien.to} to={lien.to} end={lien.end} className={classeLien}>
               {lien.libelle}
             </NavLink>

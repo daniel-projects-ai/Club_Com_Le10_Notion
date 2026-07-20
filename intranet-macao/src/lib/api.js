@@ -57,5 +57,9 @@ export const api = {
   creerDossier: (opportuniteId) =>
     appel(`/opportunities/${opportuniteId}/dossier`, { method: 'POST' }),
   majDossier: (id, champs) =>
-    appel(`/dossiers/${id}`, { method: 'PATCH', body: JSON.stringify(champs) })
+    appel(`/dossiers/${id}`, { method: 'PATCH', body: JSON.stringify(champs) }),
+
+  // CRM — réservé à Macao, le serveur renvoie 403 aux autres rôles
+  organisations: () => appel('/organisations'),
+  organisation: (id) => appel(`/organisations/${id}`)
 }

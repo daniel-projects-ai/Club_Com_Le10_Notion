@@ -21,6 +21,12 @@ import {
   joursAvantEcheance,
   validerChampsDossier
 } from '../../services/dossiers.js'
+import {
+  listOrganisations,
+  getOrganisation,
+  listInterlocuteurs
+} from '../../services/organisationsClient.js'
+import { calculerHistorique, filterOrganisationForRole } from '../../services/organisations.js'
 
 const router = express.Router()
 
@@ -278,6 +284,109 @@ router.patch('/dossiers/:id', requireRole('Macao'), async (req, res) => {
   }
 })
 
+// Contexte CRM chargé UNE fois par requête (même principe que chargerIndexLiens) :
+// les rattachements organisation → opportunités → dossiers se font ensuite en
+// mémoire, jamais un appel Airtable par organisation.
+// `avecInterlocuteurs` vaut true par défaut : un appelant qui oublie l'option
+// obtient le contexte complet plutôt qu'une fiche amputée. Seule la route liste,
+// qui n'affiche pas les interlocuteurs, s'en dispense explicitement.
+async function chargerContexteCrm({ avecInterlocuteurs = true } = {}) {
+  // getAllOpportunities absorbe déjà ses propres pannes et renvoie [].
+  const opportunites = await getAllOpportunities()
+  const oppParId = new Map(opportunites.map(o => [o.id, o]))
+
+  // Une panne sur ces tables ne doit pas faire échouer la route : l'historique
+  // se dégrade (compteurs à null, listes vides) mais la fiche s'affiche.
+  let dossiers = []
+  try {
+    dossiers = await listDossiers()
+  } catch (err) {
+    console.error('❌ CRM (dossiers):', err.message)
+  }
+
+  let interlocuteurs = []
+  if (avecInterlocuteurs) {
+    try {
+      interlocuteurs = await listInterlocuteurs()
+    } catch (err) {
+      console.error('❌ CRM (interlocuteurs):', err.message)
+    }
+  }
+
+  return { oppParId, dossiers, interlocuteurs }
+}
+
+// Rattache à une organisation ses opportunités et ses dossiers.
+// Un identifiant lié pointant sur une opportunité supprimée est simplement
+// ignoré (filter(Boolean)) : le calcul ne doit pas tomber pour autant.
+function rattacher(organisation, { oppParId, dossiers }) {
+  const opportunites = (organisation.opportuniteIds || [])
+    .map(id => oppParId.get(id))
+    .filter(Boolean)
+  const idsOpp = new Set(opportunites.map(o => o.id))
+  const dossiersLies = dossiers.filter(d => (d.opportuniteIds || []).some(id => idsOpp.has(id)))
+  return { opportunites, dossiers: dossiersLies }
+}
+
+// GET /api/intranet/organisations — réservé à Macao.
+router.get('/organisations', requireRole('Macao'), async (req, res) => {
+  try {
+    const organisations = await listOrganisations()
+    // La liste n'affiche pas les interlocuteurs : inutile d'appeler cette table.
+    const contexte = await chargerContexteCrm({ avecInterlocuteurs: false })
+
+    res.json({
+      data: organisations
+        .map(org => {
+          const { opportunites, dossiers } = rattacher(org, contexte)
+          return { ...org, historique: calculerHistorique(opportunites, dossiers) }
+        })
+        .map(org => filterOrganisationForRole(org, req.user.role))
+        .filter(Boolean)
+    })
+  } catch (err) {
+    console.error('❌ organisations:', err.message)
+    res.status(500).json({ error: 'Erreur de chargement' })
+  }
+})
+
+// GET /api/intranet/organisations/:id — réservé à Macao.
+router.get('/organisations/:id', requireRole('Macao'), async (req, res) => {
+  try {
+    const org = await getOrganisation(req.params.id)
+    const contexte = await chargerContexteCrm()
+    const { opportunites, dossiers } = rattacher(org, contexte)
+
+    const fiche = {
+      ...org,
+      historique: calculerHistorique(opportunites, dossiers),
+      opportunites: opportunites.map(o => ({
+        id: o.id,
+        nom: o.name,
+        statut: o.status,
+        dateLimite: o.deadline
+      })),
+      dossiers: dossiers.map(d => ({
+        id: d.id,
+        nom: d.nom,
+        statut: d.statut,
+        resultat: d.resultat
+      })),
+      interlocuteurs: contexte.interlocuteurs.filter(i => (i.organisationIds || []).includes(org.id))
+    }
+
+    res.json({ data: filterOrganisationForRole(fiche, req.user.role) })
+  } catch (err) {
+    console.error('❌ organisation:', err.message)
+    // Airtable signale un identifiant inconnu par un 404 : c'est une erreur
+    // d'appel, pas une panne serveur.
+    if (/NOT_FOUND|HTTP 404/i.test(err.message)) {
+      return res.status(404).json({ error: 'Organisation introuvable' })
+    }
+    res.status(500).json({ error: 'Erreur de chargement' })
+  }
+})
+
 // GET /api/intranet/directory
 router.get('/directory', async (req, res) => {
   try {
@@ -353,10 +462,18 @@ router.get('/dashboard', async (req, res) => {
       console.error('❌ indicateurs dossiers:', err.message)
     }
 
+    // Seul garde-fou contre la dégradation silencieuse du CRM : une opportunité
+    // créée sans organisation rattachée n'apparaît dans aucune fiche et sortirait
+    // de l'historique sans que personne ne s'en aperçoive. Contrairement aux
+    // indicateurs dossiers, ce calcul n'appelle pas Airtable : il compte en mémoire
+    // des opportunités déjà chargées, donc rien à isoler ici.
+    const sansOrganisation = opps.filter(o => !(o.organisationIds || []).length).length
+
     res.json({
       data: {
         ...base,
         aAnalyser: opps.filter(o => o.status === 'À analyser').length,
+        sansOrganisation,
         dossiersEnCours,
         aDeposer,
         dossiersBloques,

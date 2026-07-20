@@ -82,6 +82,30 @@ function BoutonInteret({ opp, onChange }) {
   )
 }
 
+// Rattachement CRM — réservé à Macao. L'absence de rattachement n'est pas un
+// détail décoratif : sans elle rien ne signale que l'opportunité sortira de
+// l'historique de l'organisation, et le CRM se vide en silence.
+function LienOrganisation({ opp }) {
+  const [premiere] = Array.isArray(opp.organisationIds) ? opp.organisationIds : []
+
+  if (!premiere) {
+    return (
+      <span className="self-center text-xs italic text-neutral-500">
+        Aucune organisation rattachée
+      </span>
+    )
+  }
+
+  return (
+    <Link
+      to={`/organisations/${premiere}`}
+      className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+    >
+      Voir l’organisation
+    </Link>
+  )
+}
+
 // Un dossier de réponse ne se justifie qu'une fois la décision de répondre prise :
 // inutile de proposer la création sur une opportunité encore à analyser ou abandonnée.
 const STATUTS_AVEC_DOSSIER = ['GO', 'Transmis au Club', 'En réponse']
@@ -321,6 +345,7 @@ export default function Opportunities() {
                       />
                     )
                 )}
+                {estMacao && <LienOrganisation opp={opp} />}
               </div>
 
               {estMacao && <BlocPositionnements opportuniteId={opp.id} />}
