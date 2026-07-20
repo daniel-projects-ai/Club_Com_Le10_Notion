@@ -83,6 +83,7 @@ function mapOpportunite(record) {
     score: typeof f['Score pertinence'] === 'number' ? f['Score pertinence'] : null,
     link: f['Lien annonce'] || null,
     visible: f['Visible sur écran'] === true,
+    organisationIds: f['Organisation'] || [],
     icon: '🎯'
   }
 }
