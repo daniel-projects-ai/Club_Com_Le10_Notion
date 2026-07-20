@@ -1,11 +1,33 @@
+import { useState } from 'react'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import StatBand from '../components/dash/StatBand'
+import BlocRelances from '../components/dash/BlocRelances'
 import PipelineBars from '../components/dash/PipelineBars'
 import StatutPastille from '../components/StatutPastille'
 
 export default function Dashboard() {
-  const { donnees, chargement, erreur } = useRequete(api.tableauDeBord)
+  const { donnees, chargement, erreur, recharger } = useRequete(api.tableauDeBord)
+  const [relanceEnCours, setRelanceEnCours] = useState(false)
+  const [erreurRelance, setErreurRelance] = useState(null)
+
+  async function marquerFaite(idTache) {
+    // Garde-fou contre le double clic : deux appels rapprochés enverraient
+    // deux fois le même changement de statut avant le premier rechargement.
+    if (relanceEnCours) return
+    setRelanceEnCours(true)
+    setErreurRelance(null)
+    try {
+      await api.changerStatutTache(idTache, 'Faite')
+      // On attend le rechargement : relâcher « en cours » plus tôt réafficherait
+      // brièvement la relance qu'on vient de clore.
+      await recharger()
+    } catch (e) {
+      setErreurRelance(e.message || 'Erreur')
+    } finally {
+      setRelanceEnCours(false)
+    }
+  }
 
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
   if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger le tableau de bord : {erreur}</p>
@@ -23,7 +45,11 @@ export default function Dashboard() {
         // Seule dérogation à la convention « — plutôt que 0 » : ici zéro n'est pas
         // une absence de données mais l'état visé (toutes les opportunités sont
         // rattachées). `??` le laisse passer et ne réserve « — » qu'à l'indicateur absent.
-        { label: 'Sans organisation', valeur: donnees.sansOrganisation ?? null, couleur: 'gold' }
+        { label: 'Sans organisation', valeur: donnees.sansOrganisation ?? null, couleur: 'gold' },
+        // Même raisonnement que ci-dessus : ce sont des indicateurs d'hygiène
+        // dont zéro est la bonne nouvelle, pas une donnée manquante.
+        { label: 'Relances en retard', valeur: donnees.relancesEnRetard ?? null, couleur: 'terra' },
+        { label: 'Relances cette semaine', valeur: donnees.relancesCetteSemaine ?? null, couleur: 'gold' }
       ]
     : [
         { label: 'Opportunités ouvertes', valeur: donnees.totalOpportunites, couleur: 'terra' },
@@ -46,6 +72,27 @@ export default function Dashboard() {
           {estMacao ? "Vue pilotage de l'agence" : "Les opportunités du Club Com' Le 10"}
         </p>
       </header>
+
+      {/* En tête de page, avant les indicateurs : une relance qu'on ne revoit
+          jamais n'existe pas. Réservé au rôle Macao — le backend ne renvoie
+          `relances` qu'à lui, un Coworker n'y verrait qu'un bloc indisponible. */}
+      {estMacao && (
+        <section className="mb-10">
+          <h2 className="font-serif text-xl text-macao-ink">Relances</h2>
+          <div className="mt-4">
+            <BlocRelances
+              relances={donnees.relances ?? null}
+              onMarquerFaite={marquerFaite}
+              enCours={relanceEnCours}
+            />
+            {erreurRelance && (
+              <p className="mt-2 text-sm text-macao-terra">
+                Impossible de marquer la relance faite : {erreurRelance}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       <StatBand stats={stats} />
 
