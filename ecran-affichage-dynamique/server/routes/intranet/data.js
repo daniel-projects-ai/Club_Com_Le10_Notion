@@ -38,6 +38,7 @@ import {
 import {
   classerRelances,
   referenceInteraction,
+  peutEtreDemarche,
   CANAUX,
   SENS,
   STATUTS_TACHE,
@@ -409,7 +410,18 @@ router.get('/organisations/:id', requireRole('Macao'), async (req, res) => {
         statut: d.statut,
         resultat: d.resultat
       })),
-      interlocuteurs: contexte.interlocuteurs.filter(i => (i.organisationIds || []).includes(org.id)),
+      // Le journal, lui, n'interdit rien : il consigne des faits passés, et
+      // refuser d'enregistrer un SMS déjà envoyé ne le dé-envoie pas. La règle
+      // de démarchage sert donc en AMONT, quand on s'apprête à écrire.
+      // On la calcule ici plutôt que de la laisser au navigateur : dupliquée en
+      // JavaScript côté front, elle divergerait tôt ou tard de celle qui fait
+      // foi — et une divergence, ici, c'est un manquement RGPD silencieux.
+      interlocuteurs: contexte.interlocuteurs
+        .filter(i => (i.organisationIds || []).includes(org.id))
+        .map(i => ({
+          ...i,
+          canauxDeconseilles: CANAUX.filter(canal => !peutEtreDemarche(i, canal))
+        })),
       // Journal de l'organisation, du plus récent au plus ancien. Les dates
       // Airtable sont des chaînes « AAAA-MM-JJ » : à format constant, l'ordre
       // lexicographique est l'ordre chronologique, donc pas de Date à
@@ -503,6 +515,12 @@ router.post('/interactions', requireRole('Macao'), async (req, res) => {
     }
 
     const auteur = await auteurDeLaSession(req.user.id)
+    // Un échange anonyme dans un journal, c'est une information perdue sans que
+    // personne ne le sache. On enregistre quand même — perdre le compte rendu
+    // serait pire — mais on le dit.
+    if (!auteur) {
+      avertissements.push('Échange enregistré sans auteur : le nom de l\'utilisateur ne fait pas partie des auteurs connus.')
+    }
 
     const champs = {
       'Référence': referenceInteraction({ date: jour, canal }, nomOrganisation),

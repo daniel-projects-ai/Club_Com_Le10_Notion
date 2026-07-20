@@ -72,6 +72,14 @@ function mapInterlocuteur(r) {
     telephone: f['Téléphone'] || null,
     // Case à cocher : Airtable omet le champ quand elle est décochée.
     opposition: f['Opposition à la prospection'] === true,
+    // SMS et WhatsApp exigent un accord préalable, contrairement à l'email B2B
+    // qui repose sur l'intérêt légitime. Sans ce mappage, le consentement
+    // vaudrait toujours `undefined` et un interlocuteur ayant pourtant accepté
+    // serait traité comme n'ayant rien accordé.
+    consentementSmsWhatsapp: f['Consentement SMS / WhatsApp'] || 'Non renseigné',
+    // Traçabilité RGPD de l'opposition : quand, et par quel moyen.
+    dateOpposition: f['Date d\'opposition'] || null,
+    canalOpposition: f['Canal de l\'opposition'] || null,
     notes: f['Notes'] || null,
     organisationIds: f['Organisation'] || []
   }
