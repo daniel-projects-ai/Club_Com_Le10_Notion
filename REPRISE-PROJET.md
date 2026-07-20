@@ -81,6 +81,12 @@ Club_Com_Le10_Notion/
 | Commentaires | `tblvkQvlOW9CdKEPm` |
 | Contacts | `tblddrQJJgmh0FW21` |
 | Dossiers de réponse | `tblp59OuT0dDNFuc1` |
+| Organisations | `tblMONv5vnC3Bn0ii` |
+| Interlocuteurs | `tblwmhpkzc3lFVeRI` |
+
+⚠️ **`Contacts` n'est pas un carnet d'adresses** — c'est la boîte de réception du formulaire Jotform (message, statut de traitement). Les contacts du CRM vivent dans `Interlocuteurs`. Ne pas les confondre.
+
+⚠️ **`Acheteur / client` (`fldE3qVHBzp7GvYxk`) sur Opportunités alimente l'Écran TV** : `estAffichable()` refuse toute opportunité sans acheteur. Le CRM a ajouté une liaison `Organisation` **à côté** de ce texte, sans le remplacer. Ne jamais renommer, convertir ni vider ce champ sans adapter `airtableClient.js` et vérifier l'écran.
 
 ⚠️ **La table Dossiers de réponse s'écrit par *nom* de champ**, contrairement aux autres. Elle a été créée après le reste du code et ses identifiants de colonnes ne sont pas figés en dur. Conséquence : **renommer une colonne dans Airtable cassera l'écriture**. Les valeurs des listes fermées (`ETATS_MEMOIRE`, `ETATS_OFFRE`, `ETATS_DEPOT`, `STATUTS_DOSSIER`, `PIECES` dans `server/services/dossiers.js`) doivent elles aussi rester identiques aux options de la table — le serveur valide contre ces listes avant d'écrire. Noter que `Acte d’engagement` utilise une apostrophe typographique (U+2019).
 
@@ -192,8 +198,16 @@ Le séquencement validé avec le client :
 2. ✅ **Dossiers de réponse** — trois chantiers parallèles (mémoire technique, offre financière, dépôt), check-list des pièces demandées vs fournies, accès limité aux coworkers mobilisés
    *Spec : `docs/superpowers/specs/2026-07-19-dossiers-de-reponse-design.md` · Plan : `docs/superpowers/plans/2026-07-19-dossiers-de-reponse.md`*
    **Dette connue** : le champ `Références utilisées` est un texte provisoire, à convertir en liaison lors du module 3. Un dossier dont l'échéance est **dépassée** n'apparaît dans aucune alerte — choix de la spec, à réexaminer.
-3. 🔲 **Clients / CRM et références** — historique par acheteur, bibliothèque de références réutilisables
-4. 🔲 **Facturation et rentabilité** — devis, factures, marge par projet
+3. **CRM agence** — redécoupé en quatre livraisons le 2026-07-20, le besoin ayant été élargi à la prospection multicanale.
+   *Cadre : `docs/superpowers/specs/2026-07-20-crm-agence-vision.md`*
+   - **3a** ✅ **Socle relationnel** — organisations (publiques, privées, associatives), interlocuteurs, historique calculé, indicateur de rattachement. Réservé à Macao.
+     *Spec : `docs/superpowers/specs/2026-07-20-crm-3a-socle-relationnel-design.md` · Plan : `docs/superpowers/plans/2026-07-20-crm-3a-socle-relationnel.md`*
+   - **3b** 🔲 **Journal des interactions et relances** — la colonne vertébrale du CRM, plus la traçabilité RGPD des oppositions
+   - **3d** 🔲 **Campagnes de prospection multicanales** — segments, séquences, outil d'emailing externe piloté depuis l'intranet. **LinkedIn journalisé à la main, jamais automatisé.**
+   - 🔲 **Bibliothèque de références** — modèle Notion « Références & compétences » (Utilisable AO, niveau de pertinence, compétences mobilisées). Cadrée : couverture en pièce jointe + lien Drive, Macao écrit et les coworkers consultent. Soldera la dette du champ texte `Références utilisées` des dossiers.
+4. 🔲 **Pipeline, devis, facturation et rentabilité** — absorbe le pipeline commercial initialement prévu en 3c : un devis et une facture sont le même continuum.
+
+**Dettes du CRM 3a** : `Dernier échange` est saisi à la main jusqu'à 3b, où le journal l'alimentera — c'est une raison de ne pas trop espacer les deux. Les tables `Organisations` et `Interlocuteurs` s'écrivent **par nom de champ**, comme `Dossiers de réponse` : renommer une colonne cassera l'écriture.
 
 Chaque module embarque son propre tableau de bord ; la vue dirigeant se consolide au fur et à mesure. **Un tableau de bord n'est pas un module, c'est une conséquence** — il ne peut afficher que ce que les modules alimentent.
 
