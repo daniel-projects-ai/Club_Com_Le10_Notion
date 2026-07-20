@@ -30,7 +30,11 @@ export default function Dashboard() {
   }
 
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger le tableau de bord : {erreur}</p>
+  // `useRequete` réutilise le même `erreur` pour le chargement initial et pour
+  // un rechargement : sans `!donnees`, l'échec du rechargement qui suit un clic
+  // effacerait toute la page alors que la relance a bien été marquée faite.
+  // `donnees` n'est nul qu'avant le premier succès, il distingue les deux cas.
+  if (erreur && !donnees) return <p className="p-10 text-sm text-macao-terra">Impossible de charger le tableau de bord : {erreur}</p>
   if (!donnees) return null
 
   const estMacao = donnees.role === 'Macao'
@@ -88,6 +92,13 @@ export default function Dashboard() {
             {erreurRelance && (
               <p className="mt-2 text-sm text-macao-terra">
                 Impossible de marquer la relance faite : {erreurRelance}
+              </p>
+            )}
+            {/* Le changement de statut a réussi mais l'actualisation a échoué :
+                les relances affichées datent d'avant le clic. */}
+            {erreur && !erreurRelance && (
+              <p className="mt-2 text-sm text-macao-terra">
+                Relances non actualisées ({erreur}) : les données ci-dessus peuvent être obsolètes.
               </p>
             )}
           </div>

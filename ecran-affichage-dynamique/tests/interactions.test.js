@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { peutEtreDemarche, classerRelances, referenceInteraction } from '../server/services/interactions.js'
+import { peutEtreDemarche, classerRelances, referenceInteraction, resoudreAuteur } from '../server/services/interactions.js'
 
 const libre = { id: 'recI1', nom: 'Jean Dupont', opposition: false, consentementSmsWhatsapp: 'Non renseigné' }
 const oppose = { id: 'recI2', nom: 'Marie Martin', opposition: true, consentementSmsWhatsapp: 'Accordé' }
@@ -98,4 +98,37 @@ test('la référence est lisible et datée', () => {
 
 test('la référence tolère des données manquantes', () => {
   assert.equal(referenceInteraction({}, null), 'Échange')
+})
+
+// Valeurs réelles des trois comptes Macao dans Airtable : un nom de famille
+// pour l'un, un espace final pour les deux autres.
+test('l\'auteur est résolu depuis le nom affiché malgré nom de famille et espaces', () => {
+  assert.equal(resoudreAuteur({ nom: 'Daniel Such' }), 'Daniel')
+  assert.equal(resoudreAuteur({ nom: 'Dominique ' }), 'Dominique')
+  assert.equal(resoudreAuteur({ nom: 'Mathieu' }), 'Mathieu')
+})
+
+test('le prénom fourni l\'emporte sur le nom affiché', () => {
+  assert.equal(resoudreAuteur({ prenom: 'Mathieu', nom: 'Daniel Such' }), 'Mathieu')
+  assert.equal(resoudreAuteur({ prenom: ' Dominique ', nom: 'Sans nom' }), 'Dominique')
+})
+
+test('la valeur renvoyée est exactement celle du single select', () => {
+  // Une variante de casse créerait une option par typecast : on renvoie la
+  // valeur canonique, jamais la saisie.
+  assert.equal(resoudreAuteur({ prenom: 'DANIEL' }), 'Daniel')
+  assert.equal(resoudreAuteur({ nom: 'daniel such' }), 'Daniel')
+})
+
+test('un nom hors de l\'équipe Macao ne donne aucun auteur', () => {
+  assert.equal(resoudreAuteur({ nom: 'Camille Dupont' }), null)
+  assert.equal(resoudreAuteur({ prenom: 'Jean-Pierre', nom: 'Jean-Pierre Martin' }), null)
+})
+
+test('une entrée vide ou absente ne donne aucun auteur', () => {
+  assert.equal(resoudreAuteur(null), null)
+  assert.equal(resoudreAuteur(undefined), null)
+  assert.equal(resoudreAuteur({}), null)
+  assert.equal(resoudreAuteur({ prenom: '', nom: '' }), null)
+  assert.equal(resoudreAuteur({ prenom: '   ' }), null)
 })

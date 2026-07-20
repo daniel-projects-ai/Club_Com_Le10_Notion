@@ -216,6 +216,11 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
                 type="text"
                 value={intituleRelance}
                 onChange={(e) => setIntituleRelance(e.target.value)}
+                // Obligatoire uniquement tant que le bloc est affiché : sans
+                // intitulé le serveur ne crée aucune tâche, autant l'empêcher
+                // avant l'appel réseau. Case décochée, le champ n'existe plus
+                // dans le DOM et ne bloque donc pas l'envoi.
+                required
                 placeholder="Rappeler pour…"
                 className="w-full border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink"
               />

@@ -42,7 +42,7 @@ import {
   CANAUX,
   SENS,
   STATUTS_TACHE,
-  AUTEURS
+  resoudreAuteur
 } from '../../services/interactions.js'
 
 const router = express.Router()
@@ -474,9 +474,7 @@ function jourLocal(d = new Date()) {
 // par typecast au lieu d'être rejeté, on préfère ne rien écrire.
 async function auteurDeLaSession(userId) {
   try {
-    const cw = await getCoworkerById(userId)
-    const nom = cw?.nom || null
-    return AUTEURS.includes(nom) ? nom : null
+    return resoudreAuteur(await getCoworkerById(userId))
   } catch (err) {
     console.error('❌ auteur (résolution):', err.message)
     return null
@@ -548,6 +546,11 @@ router.post('/interactions', requireRole('Macao'), async (req, res) => {
     }
 
     let tache = null
+    // Une relance demandée mais sans intitulé ne peut pas être créée : le dire,
+    // sinon l'utilisateur repart persuadé d'avoir programmé un rappel.
+    if (relance && !relance.intitule) {
+      avertissements.push('Relance non créée : l\'intitulé est vide.')
+    }
     if (relance?.intitule) {
       try {
         const champsTache = {

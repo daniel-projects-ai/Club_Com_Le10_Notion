@@ -15,6 +15,24 @@ export const STATUTS_TACHE = ['À faire', 'Faite', 'Annulée']
 // Macao. Un nom hors liste créerait une option : on filtre avant d'écrire.
 export const AUTEURS = ['Daniel', 'Dominique', 'Mathieu']
 
+// Résout l'auteur d'un échange vers l'une des valeurs EXACTES de AUTEURS.
+// Le champ Airtable « Prénom » porte la bonne valeur pour toute l'équipe ; les
+// noms affichés, eux, contiennent un nom de famille (« Daniel Such ») ou un
+// espace final (« Dominique ») qui feraient échouer une comparaison directe.
+// On renvoie toujours la valeur canonique : `typecast: true` créerait sinon une
+// nouvelle option du single select à partir d'une variante de casse.
+export function resoudreAuteur(coworker) {
+  if (!coworker) return null
+  // Un « Prénom » vide ou fait d'espaces vaut absent : on retombe sur le nom.
+  const brut = String(coworker.prenom || '').trim() || String(coworker.nom || '').trim()
+  if (!brut) return null
+  // Repli quand « Prénom » est vide : le premier mot du nom affiché. Un prénom
+  // composé (« Jean-Pierre ») reste entier, seuls les espaces le découpent.
+  const premierMot = brut.split(/\s+/)[0]
+  const cle = premierMot.toLowerCase()
+  return AUTEURS.find(a => a.toLowerCase() === cle) || null
+}
+
 // Canaux exigeant un accord préalable et explicite. L'email B2B repose sur
 // l'intérêt légitime ; SMS et WhatsApp, non : l'absence de réponse ne vaut
 // pas consentement.
@@ -85,4 +103,4 @@ export function referenceInteraction(interaction = {}, nomOrganisation = null) {
   return parties.length ? parties.join(' · ') : 'Échange'
 }
 
-export default { peutEtreDemarche, classerRelances, referenceInteraction }
+export default { peutEtreDemarche, classerRelances, referenceInteraction, resoudreAuteur }
