@@ -27,6 +27,22 @@ import {
   listInterlocuteurs
 } from '../../services/organisationsClient.js'
 import { calculerHistorique, filterOrganisationForRole } from '../../services/organisations.js'
+import {
+  listInteractions,
+  listTaches,
+  creerInteraction,
+  creerTache,
+  majTache,
+  majDernierEchange
+} from '../../services/interactionsClient.js'
+import {
+  classerRelances,
+  referenceInteraction,
+  CANAUX,
+  SENS,
+  STATUTS_TACHE,
+  AUTEURS
+} from '../../services/interactions.js'
 
 const router = express.Router()
 
@@ -290,7 +306,10 @@ router.patch('/dossiers/:id', requireRole('Macao'), async (req, res) => {
 // `avecInterlocuteurs` vaut true par défaut : un appelant qui oublie l'option
 // obtient le contexte complet plutôt qu'une fiche amputée. Seule la route liste,
 // qui n'affiche pas les interlocuteurs, s'en dispense explicitement.
-async function chargerContexteCrm({ avecInterlocuteurs = true } = {}) {
+// `avecJournal` suit la même convention : true par défaut, seule la route liste
+// s'en dispense explicitement. Interactions et tâches sont chargées UNE fois
+// par requête, jamais par organisation.
+async function chargerContexteCrm({ avecInterlocuteurs = true, avecJournal = true } = {}) {
   // getAllOpportunities absorbe déjà ses propres pannes et renvoie [].
   const opportunites = await getAllOpportunities()
   const oppParId = new Map(opportunites.map(o => [o.id, o]))
@@ -313,7 +332,24 @@ async function chargerContexteCrm({ avecInterlocuteurs = true } = {}) {
     }
   }
 
-  return { oppParId, dossiers, interlocuteurs }
+  // Même principe pour le journal : une panne sur ces tables dégrade la fiche
+  // (listes vides) plutôt que de la faire échouer en 500.
+  let interactions = []
+  let taches = []
+  if (avecJournal) {
+    try {
+      interactions = await listInteractions()
+    } catch (err) {
+      console.error('❌ CRM (interactions):', err.message)
+    }
+    try {
+      taches = await listTaches()
+    } catch (err) {
+      console.error('❌ CRM (tâches):', err.message)
+    }
+  }
+
+  return { oppParId, dossiers, interlocuteurs, interactions, taches }
 }
 
 // Rattache à une organisation ses opportunités et ses dossiers.
@@ -332,8 +368,9 @@ function rattacher(organisation, { oppParId, dossiers }) {
 router.get('/organisations', requireRole('Macao'), async (req, res) => {
   try {
     const organisations = await listOrganisations()
-    // La liste n'affiche pas les interlocuteurs : inutile d'appeler cette table.
-    const contexte = await chargerContexteCrm({ avecInterlocuteurs: false })
+    // La liste n'affiche ni les interlocuteurs ni le journal : inutile
+    // d'appeler ces tables.
+    const contexte = await chargerContexteCrm({ avecInterlocuteurs: false, avecJournal: false })
 
     res.json({
       data: organisations
@@ -372,7 +409,33 @@ router.get('/organisations/:id', requireRole('Macao'), async (req, res) => {
         statut: d.statut,
         resultat: d.resultat
       })),
-      interlocuteurs: contexte.interlocuteurs.filter(i => (i.organisationIds || []).includes(org.id))
+      interlocuteurs: contexte.interlocuteurs.filter(i => (i.organisationIds || []).includes(org.id)),
+      // Journal de l'organisation, du plus récent au plus ancien. Les dates
+      // Airtable sont des chaînes « AAAA-MM-JJ » : à format constant, l'ordre
+      // lexicographique est l'ordre chronologique, donc pas de Date à
+      // construire. Une interaction sans date part en fin de liste.
+      interactions: contexte.interactions
+        .filter(i => (i.organisationIds || []).includes(org.id))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+        .map(i => ({
+          id: i.id,
+          canal: i.canal,
+          sens: i.sens,
+          date: i.date,
+          compteRendu: i.compteRendu,
+          auteur: i.auteur,
+          assisteeIA: i.assisteeIA,
+          interlocuteurIds: i.interlocuteurIds
+        })),
+      taches: contexte.taches
+        .filter(t => (t.organisationIds || []).includes(org.id))
+        .map(t => ({
+          id: t.id,
+          intitule: t.intitule,
+          echeance: t.echeance,
+          statut: t.statut,
+          responsable: t.responsable
+        }))
     }
 
     res.json({ data: filterOrganisationForRole(fiche, req.user.role) })
@@ -384,6 +447,135 @@ router.get('/organisations/:id', requireRole('Macao'), async (req, res) => {
       return res.status(404).json({ error: 'Organisation introuvable' })
     }
     res.status(500).json({ error: 'Erreur de chargement' })
+  }
+})
+
+// Journée locale au format Airtable « AAAA-MM-JJ ». toISOString() donnerait la
+// journée UTC : le soir à Paris, un échange serait daté du lendemain.
+function jourLocal(d = new Date()) {
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+// Résout le nom de l'auteur depuis la session. Les single selects « Auteur » et
+// « Responsable » ne listent que l'équipe Macao : un nom hors liste serait créé
+// par typecast au lieu d'être rejeté, on préfère ne rien écrire.
+async function auteurDeLaSession(userId) {
+  try {
+    const cw = await getCoworkerById(userId)
+    const nom = cw?.nom || null
+    return AUTEURS.includes(nom) ? nom : null
+  } catch (err) {
+    console.error('❌ auteur (résolution):', err.message)
+    return null
+  }
+}
+
+// POST /api/intranet/interactions — consigner un échange (Macao).
+// Principe directeur : une fois le compte rendu saisi, il DOIT être enregistré.
+// Les enrichissements qui suivent (date de dernier échange, relance) sont des
+// bonus signalés dans `avertissements`, jamais des causes d'échec : perdre un
+// compte rendu déjà rédigé est ce qui fait abandonner un journal.
+router.post('/interactions', requireRole('Macao'), async (req, res) => {
+  const {
+    organisationId, canal, sens, date, compteRendu,
+    interlocuteurId, opportuniteId, assisteeIA, relance
+  } = req.body || {}
+
+  // Validation des valeurs AVANT tout appel réseau : Airtable est appelé avec
+  // `typecast: true`, une valeur hors liste créerait une option au lieu d'être
+  // rejetée. Même motif que le PATCH /dossiers/:id.
+  if (!organisationId) return res.status(400).json({ error: 'organisationId est obligatoire' })
+  if (!CANAUX.includes(canal)) return res.status(400).json({ error: `Canal invalide : ${canal}` })
+  if (!SENS.includes(sens)) return res.status(400).json({ error: `Sens invalide : ${sens}` })
+
+  const jour = date || jourLocal()
+  const avertissements = []
+
+  try {
+    // Le nom de l'organisation ne sert qu'au libellé : s'il manque, la
+    // référence se contente de la date et du canal.
+    let nomOrganisation = null
+    try {
+      nomOrganisation = (await getOrganisation(organisationId))?.nom || null
+    } catch (err) {
+      console.error('❌ interaction (nom organisation):', err.message)
+    }
+
+    const auteur = await auteurDeLaSession(req.user.id)
+
+    const champs = {
+      'Référence': referenceInteraction({ date: jour, canal }, nomOrganisation),
+      'Canal': canal,
+      'Sens': sens,
+      'Date': jour,
+      'Organisation': [organisationId],
+      'Assistée par IA': assisteeIA === true
+    }
+    // Un compte rendu vide est légitime : un appel sans suite reste un fait à
+    // journaliser. On n'écrit simplement pas la clé.
+    if (compteRendu) champs['Compte rendu'] = compteRendu
+    if (auteur) champs['Auteur'] = auteur
+    if (interlocuteurId) champs['Interlocuteur'] = [interlocuteurId]
+    if (opportuniteId) champs['Opportunité'] = [opportuniteId]
+
+    const interaction = await creerInteraction(champs)
+
+    // À partir d'ici, plus rien ne peut faire échouer la requête.
+    try {
+      await majDernierEchange(organisationId, jour)
+    } catch (err) {
+      console.error('❌ interaction (dernier échange):', err.message)
+      avertissements.push('Le dernier échange de l\'organisation n\'a pas pu être mis à jour.')
+    }
+
+    let tache = null
+    if (relance?.intitule) {
+      try {
+        const champsTache = {
+          'Intitulé': relance.intitule,
+          'Statut': 'À faire',
+          'Organisation': [organisationId],
+          'Interaction d\'origine': [interaction.id]
+        }
+        // Une relance sans échéance reste utile : elle est créée quand même et
+        // se rangera dans « plus tard » plutôt que d'être perdue.
+        if (relance.echeance) champsTache['Échéance'] = relance.echeance
+        else avertissements.push('Relance créée sans échéance : elle apparaîtra dans « plus tard ».')
+        if (auteur) champsTache['Responsable'] = auteur
+        if (interlocuteurId) champsTache['Interlocuteur'] = [interlocuteurId]
+        if (opportuniteId) champsTache['Opportunité'] = [opportuniteId]
+
+        tache = await creerTache(champsTache)
+      } catch (err) {
+        console.error('❌ interaction (relance):', err.message)
+        avertissements.push('L\'échange est enregistré, mais la relance n\'a pas pu être créée.')
+      }
+    }
+
+    res.json({ data: { interaction, tache, avertissements } })
+  } catch (err) {
+    console.error('❌ interaction (création):', err.message)
+    res.status(500).json({ error: 'Impossible d\'enregistrer l\'échange' })
+  }
+})
+
+// PATCH /api/intranet/taches/:id — faire avancer une relance (Macao).
+router.patch('/taches/:id', requireRole('Macao'), async (req, res) => {
+  const { statut } = req.body || {}
+  // Liste fermée validée avant l'appel réseau, pour la même raison que ci-dessus.
+  if (!STATUTS_TACHE.includes(statut)) {
+    return res.status(400).json({ error: `Statut invalide : ${statut}` })
+  }
+
+  try {
+    res.json({ data: await majTache(req.params.id, { 'Statut': statut }) })
+  } catch (err) {
+    console.error('❌ maj tâche:', err.message)
+    if (/NOT_FOUND|HTTP 404/i.test(err.message)) {
+      return res.status(404).json({ error: 'Tâche introuvable' })
+    }
+    res.status(500).json({ error: 'Impossible de mettre à jour la relance' })
   }
 })
 
@@ -462,6 +654,37 @@ router.get('/dashboard', async (req, res) => {
       console.error('❌ indicateurs dossiers:', err.message)
     }
 
+    // Relances : isolées elles aussi. Une panne sur la table Tâches ne doit pas
+    // rendre la page d'accueil blanche — les trois valeurs tombent à null et
+    // s'affichent « — ».
+    let relances = null
+    let relancesEnRetard = null
+    let relancesCetteSemaine = null
+    try {
+      const taches = await listTaches()
+
+      // Le nom de l'organisation est résolu depuis un index chargé une seule
+      // fois, jamais un appel Airtable par tâche.
+      let nomParOrganisation = new Map()
+      try {
+        nomParOrganisation = new Map((await listOrganisations()).map(o => [o.id, o.nom]))
+      } catch (err) {
+        // Sans les noms, la relance reste affichable : seul le libellé manque.
+        console.error('❌ relances (organisations):', err.message)
+      }
+
+      const avecOrganisation = taches.map(t => ({
+        ...t,
+        organisation: (t.organisationIds || []).map(id => nomParOrganisation.get(id)).find(Boolean) || null
+      }))
+
+      relances = classerRelances(avecOrganisation)
+      relancesEnRetard = relances.enRetard.length
+      relancesCetteSemaine = relances.cetteSemaine.length
+    } catch (err) {
+      console.error('❌ relances:', err.message)
+    }
+
     // Seul garde-fou contre la dégradation silencieuse du CRM : une opportunité
     // créée sans organisation rattachée n'apparaît dans aucune fiche et sortirait
     // de l'historique sans que personne ne s'en aperçoive. Contrairement aux
@@ -477,6 +700,9 @@ router.get('/dashboard', async (req, res) => {
         dossiersEnCours,
         aDeposer,
         dossiersBloques,
+        relances,
+        relancesEnRetard,
+        relancesCetteSemaine,
         parStatut,
         // Les mieux notées d'abord : c'est ce qui mérite l'attention.
         prioritaires: [...opps]
