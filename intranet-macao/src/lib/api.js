@@ -61,5 +61,11 @@ export const api = {
 
   // CRM — réservé à Macao, le serveur renvoie 403 aux autres rôles
   organisations: () => appel('/organisations'),
-  organisation: (id) => appel(`/organisations/${id}`)
+  organisation: (id) => appel(`/organisations/${id}`),
+
+  // Journal et relances — réservé à Macao
+  journaliserEchange: (corps) =>
+    appel('/interactions', { method: 'POST', body: JSON.stringify(corps) }),
+  changerStatutTache: (id, statut) =>
+    appel(`/taches/${id}`, { method: 'PATCH', body: JSON.stringify({ statut }) })
 }
