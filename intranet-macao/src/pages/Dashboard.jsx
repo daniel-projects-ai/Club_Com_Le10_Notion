@@ -45,18 +45,23 @@ export default function Dashboard() {
   const opportunites = Array.isArray(donnees.opportunites) ? donnees.opportunites : []
 
   // Quatre repères, pas davantage : au-delà, on ne lit plus, on balaye.
-  // Les compteurs facultatifs passent par `|| null` pour afficher « — » plutôt qu'un zéro trompeur.
+  // Les compteurs passent par `??` et jamais `||` : côté serveur, `null` signale
+  // une table illisible et `0` un décompte réel. Les confondre afficherait « — »
+  // sur un vrai zéro, donc une panne là où tout va bien.
   const stats = estMacao
     ? [
         { label: 'Projets en cours', valeur: donnees.totalOpportunites, couleur: 'terra' },
         { label: 'À trier', valeur: donnees.aAnalyser, couleur: 'gold' },
-        { label: 'Devis en cours', valeur: donnees.dossiersEnCours || null, couleur: 'teal' },
+        // « Ouverts » et non « en cours » : la clé compte les devis dont le champ
+        // Résultat vaut « En cours », c'est-à-dire dont l'issue n'est pas tranchée
+        // — y compris un devis déposé sur lequel plus personne ne travaille.
+        { label: 'Devis ouverts', valeur: donnees.dossiersEnCours ?? null, couleur: 'teal' },
         // Indicateur d'hygiène : zéro est l'état visé, `??` le laisse passer.
         { label: 'Projets sans client', valeur: donnees.sansOrganisation ?? null, couleur: 'ink' }
       ]
     : [
         { label: 'Projets ouverts', valeur: donnees.totalOpportunites, couleur: 'terra' },
-        { label: 'Échéances sous 30 j', valeur: donnees.echeancesProches || null, couleur: 'teal' }
+        { label: 'Échéances sous 30 j', valeur: donnees.echeancesProches ?? null, couleur: 'teal' }
       ]
 
   return (

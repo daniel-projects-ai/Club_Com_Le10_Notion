@@ -186,7 +186,9 @@ export default function OrganisationDetail() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      {/* `lg` et non `md` : à 768 px la barre latérale est encore un tiroir et
+          la page occupe toute la largeur ; quatre colonnes y seraient à l'étroit. */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Compteur titre="Projets" valeur={historique.nbOpportunites} couleur="#206b73" />
         <Compteur titre="Devis déposés" valeur={historique.nbDossiersDeposes} couleur="#e9a94e" />
         <Compteur titre="Gagnés" valeur={historique.nbGagnes} couleur="#206b73" />

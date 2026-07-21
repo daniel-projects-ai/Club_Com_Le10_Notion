@@ -129,7 +129,10 @@ export default function DossierDetail() {
 
       {erreur && <p className="text-macao-terra text-sm mb-4">{erreur}</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      {/* `lg` et non `md` : ces cartes portent un menu déroulant aux libellés
+          longs (« Offre financière en cours »), illisible à trois colonnes sur
+          un iPad en portrait, où la barre latérale est encore un tiroir. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <ChantierCarte
           titre="Mémoire technique" valeur={d.memoire} options={ETATS_MEMOIRE}
           couleur="#c0562f" enCours={enCours}
