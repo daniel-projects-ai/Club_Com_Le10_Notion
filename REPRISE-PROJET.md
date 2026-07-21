@@ -83,6 +83,10 @@ Club_Com_Le10_Notion/
 | Dossiers de réponse | `tblp59OuT0dDNFuc1` |
 | Organisations | `tblMONv5vnC3Bn0ii` |
 | Interlocuteurs | `tblwmhpkzc3lFVeRI` |
+| Interactions | `tbl5xBf9xHwML8w8G` |
+| Tâches | `tbla7KkVgkEKbaZYv` |
+
+⚠️ **Le select `Auteur` des Interactions et `Responsable` des Tâches ne listent que `Daniel`, `Dominique`, `Mathieu`.** Le serveur résout l'auteur depuis le champ `Prénom` du coworker (`resoudreAuteur` dans `server/services/interactions.js`), en tolérant les espaces et la casse — les comptes Airtable portent en effet `Daniel Such` et `Dominique ` avec un espace final. **Un nouveau membre de Macao devra être ajouté aux deux selects ET avoir son `Prénom` renseigné**, sinon ses échanges seront enregistrés sans auteur (avec un avertissement visible).
 
 ⚠️ **`Contacts` n'est pas un carnet d'adresses** — c'est la boîte de réception du formulaire Jotform (message, statut de traitement). Les contacts du CRM vivent dans `Interlocuteurs`. Ne pas les confondre.
 
@@ -202,7 +206,10 @@ Le séquencement validé avec le client :
    *Cadre : `docs/superpowers/specs/2026-07-20-crm-agence-vision.md`*
    - **3a** ✅ **Socle relationnel** — organisations (publiques, privées, associatives), interlocuteurs, historique calculé, indicateur de rattachement. Réservé à Macao.
      *Spec : `docs/superpowers/specs/2026-07-20-crm-3a-socle-relationnel-design.md` · Plan : `docs/superpowers/plans/2026-07-20-crm-3a-socle-relationnel.md`*
-   - **3b** 🔲 **Journal des interactions et relances** — la colonne vertébrale du CRM, plus la traçabilité RGPD des oppositions
+   - **3b** ✅ **Journal des interactions et relances** — 10 canaux (dont SMS et WhatsApp), formulaire de saisie en trente secondes avec relance programmée dans le même geste, bloc « Vos relances » en tête du tableau de bord, consentement par canal.
+     *Spec : `docs/superpowers/specs/2026-07-20-crm-3b-journal-relances-design.md` · Plan : `docs/superpowers/plans/2026-07-20-crm-3b-journal-relances.md`*
+     **⚠️ Enregistrer une opposition ne la fait pas respecter.** `peutEtreDemarche` (dans `server/services/interactions.js`) alimente les avertissements du formulaire et le champ `canauxDeconseilles`, mais **aucun blocage automatique n'existe tant que les campagnes (3d) ne sont pas construites** — c'est la vigilance humaine qui joue. Le journal, lui, n'a pas à bloquer : il enregistre des faits passés, y compris un échange avec quelqu'un qui s'est opposé.
+     **Dettes** : le bloc relances du tableau de bord charge *toutes* les tâches sans filtre Airtable — à revoir si la table grossit. `formaterDate` (`intranet-macao/src/lib/format.js`) interprète les dates en UTC : sans effet en France, faux d'un jour en fuseau négatif.
    - **3d** 🔲 **Campagnes de prospection multicanales** — segments, séquences, outil d'emailing externe piloté depuis l'intranet. **LinkedIn journalisé à la main, jamais automatisé.**
    - 🔲 **Bibliothèque de références** — modèle Notion « Références & compétences » (Utilisable AO, niveau de pertinence, compétences mobilisées). Cadrée : couverture en pièce jointe + lien Drive, Macao écrit et les coworkers consultent. Soldera la dette du champ texte `Références utilisées` des dossiers.
 4. 🔲 **Pipeline, devis, facturation et rentabilité** — absorbe le pipeline commercial initialement prévu en 3c : un devis et une facture sont le même continuum.
