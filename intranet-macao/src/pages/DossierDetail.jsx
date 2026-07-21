@@ -94,11 +94,11 @@ export default function DossierDetail() {
     modifier({ piecesFournies: nouvelles })
   }
 
-  if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
+  if (chargement) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-ink/60">Chargement…</div>
   if (!d) {
     return (
-      <div className="p-10">
-        <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les devis</Link>
+      <div className="px-4 py-6 sm:px-8 sm:py-10">
+        <Link to="/dossiers" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">← Tous les devis</Link>
         <p className="text-macao-terra">
           {erreurChargement
             ? `Impossible d’afficher ce devis : ${erreurChargement}`
@@ -113,8 +113,8 @@ export default function DossierDetail() {
   const equipe = Array.isArray(d.equipe) ? d.equipe : []
 
   return (
-    <div className="p-5 sm:p-10 max-w-5xl">
-      <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les devis</Link>
+    <div className="px-4 py-6 sm:p-10 max-w-5xl">
+      <Link to="/dossiers" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">← Tous les devis</Link>
 
       <BarreActions
         titre={d.nom}
@@ -147,7 +147,7 @@ export default function DossierDetail() {
         />
       </div>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
+      <section className="bg-white rounded-xl p-4 mb-6 sm:p-6">
         <h2 className="font-serif text-xl text-macao-ink mb-1">Pièces administratives</h2>
         <p className="text-sm text-macao-ink/55 mb-4">
           {d.piecesManquantes?.length
@@ -162,7 +162,7 @@ export default function DossierDetail() {
         />
       </section>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
+      <section className="bg-white rounded-xl p-4 mb-6 sm:p-6">
         <h2 className="font-serif text-xl text-macao-ink mb-4">Équipe mobilisée</h2>
         {equipe.length === 0 ? (
           <p className="text-sm text-macao-ink/55">Personne n’est encore mobilisé sur ce devis.</p>
@@ -196,9 +196,14 @@ export default function DossierDetail() {
               ['Notes internes', ouTiret(d.notesInternes)]
             ] : [])
           ].map(([label, valeur]) => (
-            <div key={label} className="flex border-b border-macao-ink/10 pb-3 last:border-0">
-              <span className="w-44 text-macao-ink/55 text-sm shrink-0">{label}</span>
-              <span className="text-macao-ink">{valeur}</span>
+            // Même empilement que sur la fiche client : libellé au-dessus de la
+            // valeur sous `sm`, côte à côte au-delà.
+            <div
+              key={label}
+              className="flex flex-col gap-x-4 gap-y-0.5 border-b border-macao-ink/10 pb-3 last:border-0 sm:flex-row"
+            >
+              <span className="text-macao-ink/55 text-sm sm:w-44 sm:shrink-0">{label}</span>
+              <span className="min-w-0 break-words text-macao-ink">{valeur}</span>
             </div>
           ))}
         </div>

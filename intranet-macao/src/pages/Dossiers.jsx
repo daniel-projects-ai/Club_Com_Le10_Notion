@@ -9,15 +9,15 @@ export default function Dossiers() {
   const { user } = useAuth()
   const { donnees, chargement, erreur } = useRequete(api.dossiers)
 
-  if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
-  if (erreur) return <div className="p-10 text-macao-terra">Impossible de charger les devis : {erreur}</div>
+  if (chargement) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-ink/60">Chargement…</div>
+  if (erreur) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-terra">Impossible de charger les devis : {erreur}</div>
 
   // useRequete déballe déjà l'enveloppe { data } de l'API : `donnees` est le tableau.
   const dossiers = donnees || []
   const estMacao = user?.role === 'Macao'
 
   return (
-    <div className="p-5 sm:p-10 max-w-6xl">
+    <div className="px-4 py-6 sm:p-10 max-w-6xl">
       <BarreActions
         titre={estMacao ? 'Devis' : 'Mes devis'}
         sousTitre={estMacao
@@ -33,12 +33,12 @@ export default function Dossiers() {
             // Sans aria-label, le lien englobant ferait lire tout le contenu de la
             // carte comme nom accessible : illisible en navigation par liens.
             aria-label={`Devis ${d.nom}${d.bloque ? ' — à traiter' : ''}`}
-            className={`block bg-white rounded-xl p-6 border-l-4 hover:shadow-md transition-shadow ${
+            className={`block bg-white rounded-xl p-4 sm:p-6 border-l-4 hover:shadow-md transition-shadow ${
               d.bloque ? 'border-macao-terra' : 'border-macao-teal'
             }`}
           >
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <h2 className="font-serif text-xl text-macao-ink">{d.nom}</h2>
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+              <h2 className="min-w-0 break-words font-serif text-xl text-macao-ink">{d.nom}</h2>
               {d.bloque && (
                 <span className="text-xs px-3 py-1 rounded-full bg-macao-terra text-white shrink-0">
                   À traiter
@@ -46,7 +46,7 @@ export default function Dossiers() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm sm:gap-x-8">
               <span><span className="text-macao-ink/50">Statut </span><b>{d.statut || '—'}</b></span>
               <span><span className="text-macao-ink/50">Acheteur </span><b>{ouTiret(d.acheteur)}</b></span>
               <span><span className="text-macao-ink/50">Échéance </span><b>{formaterDate(d.dateLimite)}</b></span>

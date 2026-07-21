@@ -32,12 +32,12 @@ export default function Dashboard() {
     }
   }
 
-  if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
+  if (chargement) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-neutral-500">Chargement…</p>
   // `useRequete` réutilise le même `erreur` pour le chargement initial et pour
   // un rechargement : sans `!donnees`, l'échec du rechargement qui suit un clic
   // effacerait toute la page alors que la relance a bien été marquée faite.
   // `donnees` n'est nul qu'avant le premier succès, il distingue les deux cas.
-  if (erreur && !donnees) return <p className="p-10 text-sm text-macao-terra">Impossible de charger le tableau de bord : {erreur}</p>
+  if (erreur && !donnees) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-macao-terra">Impossible de charger le tableau de bord : {erreur}</p>
   if (!donnees) return null
 
   const estMacao = donnees.role === 'Macao'
@@ -60,9 +60,9 @@ export default function Dashboard() {
       ]
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
       <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Aujourd'hui</h1>
+        <h1 className="font-serif text-2xl text-macao-ink sm:text-3xl">Aujourd'hui</h1>
         <p className="mt-1 text-sm text-neutral-500">
           {estMacao ? "Ce qui attend l'agence ce matin" : "Les projets du Club Com' Le 10"}
         </p>
@@ -106,11 +106,15 @@ export default function Dashboard() {
               <p className="text-sm text-neutral-500">Aucun nouveau projet à trier pour le moment.</p>
             ) : (
               prioritaires.map((opp) => (
-                <article key={opp.id} className="flex items-center gap-5 rounded-xl bg-white p-5 shadow-sm">
-                  <div className="w-12 shrink-0 text-center font-serif text-2xl tabular-nums text-macao-terra">
+                <article key={opp.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-white p-4 shadow-sm sm:gap-5 sm:p-5">
+                  <div className="w-10 shrink-0 text-center font-serif text-2xl tabular-nums text-macao-terra sm:w-12">
                     {opp.score ?? '—'}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  {/* min-w-40 : la pastille ne rétrécit pas, et un statut long
+                      (« GO / NO GO à décider ») réduisait le nom du projet à
+                      « Refonte d… ». Ce plancher force la pastille à passer à la
+                      ligne plutôt que d'écraser l'information principale. */}
+                  <div className="min-w-40 flex-1">
                     <div className="truncate font-medium text-macao-ink">{opp.name}</div>
                     <div className="truncate text-sm text-macao-teal">{opp.client || '—'}</div>
                   </div>
@@ -122,9 +126,9 @@ export default function Dashboard() {
             <p className="text-sm text-neutral-500">Aucun projet à afficher.</p>
           ) : (
             opportunites.map((opp) => (
-              <article key={opp.id} className="rounded-xl bg-white p-5 shadow-sm">
-                <div className="font-medium text-macao-ink">{opp.name}</div>
-                <div className="text-sm text-macao-teal">{opp.client || '—'}</div>
+              <article key={opp.id} className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
+                <div className="break-words font-medium text-macao-ink">{opp.name}</div>
+                <div className="break-words text-sm text-macao-teal">{opp.client || '—'}</div>
               </article>
             ))
           )}

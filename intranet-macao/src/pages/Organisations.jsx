@@ -20,11 +20,11 @@ function CarteOrganisation({ o }) {
       // Sans aria-label, le lien englobant ferait lire tout le contenu de la
       // carte comme nom accessible : illisible en navigation par liens.
       aria-label={`Organisation ${o.nom}`}
-      className="block bg-white rounded-xl p-6 border-l-4 border-macao-teal hover:shadow-md transition-shadow"
+      className="block bg-white rounded-xl p-4 sm:p-6 border-l-4 border-macao-teal hover:shadow-md transition-shadow"
     >
-      <h3 className="font-serif text-xl text-macao-ink mb-2">{o.nom}</h3>
+      <h3 className="break-words font-serif text-xl text-macao-ink mb-2">{o.nom}</h3>
 
-      <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm sm:gap-x-8">
         <span><span className="text-macao-ink/50">Nature </span><b>{ouTiret(o.nature)}</b></span>
         <span><span className="text-macao-ink/50">Type </span><b>{ouTiret(o.type)}</b></span>
         <span><span className="text-macao-ink/50">Territoire </span><b>{ouTiret(o.territoire)}</b></span>
@@ -57,10 +57,10 @@ function Groupe({ titre, organisations }) {
 export default function Organisations() {
   const { donnees, chargement, erreur } = useRequete(api.organisations)
 
-  if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
+  if (chargement) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-ink/60">Chargement…</div>
   if (erreur) {
     return (
-      <div className="p-10 text-macao-terra">
+      <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-terra">
         Impossible de charger les clients et prospects : {erreur}
       </div>
     )
@@ -76,7 +76,7 @@ export default function Organisations() {
   const prospects = organisations.filter(o => !NIVEAUX_CLIENT.includes(o.niveauRelation))
 
   return (
-    <div className="p-5 sm:p-10 max-w-6xl">
+    <div className="px-4 py-6 sm:p-10 max-w-6xl">
       <BarreActions
         titre="Clients & prospects"
         sousTitre={`${clients.length} client${clients.length > 1 ? 's' : ''} · ${prospects.length} prospect${prospects.length > 1 ? 's' : ''} & contact${prospects.length > 1 ? 's' : ''}`}

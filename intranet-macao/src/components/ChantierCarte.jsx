@@ -4,14 +4,14 @@ export default function ChantierCarte({ titre, valeur, options, couleur, onChang
   const listeOptions = Array.isArray(options) ? options : []
 
   return (
-    <div className="bg-white rounded-xl p-5 border-t-4" style={{ borderTopColor: couleur }}>
+    <div className="bg-white rounded-xl p-4 sm:p-5 border-t-4" style={{ borderTopColor: couleur }}>
       <p className="text-xs text-macao-ink/60 mb-2">{titre}</p>
       {onChanger ? (
         <select
           value={valeur || ''}
           disabled={enCours}
           onChange={(e) => onChanger(e.target.value)}
-          className="w-full bg-transparent font-serif text-lg text-macao-ink border border-macao-ink/15 rounded-lg px-3 py-2 disabled:opacity-50"
+          className="w-full min-h-[44px] bg-transparent font-serif text-lg text-macao-ink border border-macao-ink/15 rounded-lg px-3 py-2 disabled:opacity-50"
         >
           {/* Un devis sans valeur ne doit pas afficher par défaut la première
               option : sans cette entrée vide, React sélectionnerait l'option 1

@@ -23,7 +23,7 @@ export default function JournalEchange({ interactions }) {
             )}
           </div>
           {it.compteRendu && (
-            <p className="mt-2 text-sm text-macao-ink whitespace-pre-wrap">{it.compteRendu}</p>
+            <p className="mt-2 text-sm text-macao-ink whitespace-pre-wrap break-words">{it.compteRendu}</p>
           )}
         </li>
       ))}

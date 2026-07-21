@@ -18,21 +18,32 @@ export default function PiecesChecklist({ demandees, fournies, onBasculer, enCou
       {listeDemandees.map(piece => {
         const fournie = listeFournies.includes(piece)
         return (
-          <li key={piece} className="flex items-center gap-3">
+          <li key={piece} className="flex items-center">
+            {/* La case reste visuellement à 20 px, mais la zone cliquable fait
+                44 px : au doigt, cocher une pièce ne doit pas se viser.
+                Les marges négatives absorbent ce débord pour que la case reste
+                alignée sur le bord du bloc et que la ligne ne s'étire pas. */}
             <button
               type="button"
               onClick={interactif ? () => onBasculer(piece) : undefined}
               disabled={!interactif}
-              className={`w-5 h-5 rounded border flex items-center justify-center text-xs shrink-0 ${
-                fournie
-                  ? 'bg-macao-teal border-macao-teal text-white'
-                  : 'border-macao-terra bg-white'
-              } ${interactif ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`-my-2 -ml-3 flex h-11 w-11 shrink-0 items-center justify-center ${
+                interactif ? 'cursor-pointer' : 'cursor-default'
+              }`}
               aria-label={fournie ? `${piece} fournie` : `${piece} manquante`}
             >
-              {fournie ? '✓' : ''}
+              <span
+                aria-hidden="true"
+                className={`flex h-5 w-5 items-center justify-center rounded border text-xs ${
+                  fournie
+                    ? 'bg-macao-teal border-macao-teal text-white'
+                    : 'border-macao-terra bg-white'
+                }`}
+              >
+                {fournie ? '✓' : ''}
+              </span>
             </button>
-            <span className={fournie ? 'text-macao-ink/70' : 'text-macao-terra font-semibold'}>
+            <span className={`min-w-0 break-words ${fournie ? 'text-macao-ink/70' : 'text-macao-terra font-semibold'}`}>
               {piece}
             </span>
           </li>

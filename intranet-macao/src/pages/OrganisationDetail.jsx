@@ -25,7 +25,7 @@ function SiteWeb({ url }) {
 
 function Compteur({ titre, valeur, couleur }) {
   return (
-    <div className="bg-white rounded-xl p-5 border-t-4" style={{ borderTopColor: couleur }}>
+    <div className="bg-white rounded-xl p-4 sm:p-5 border-t-4" style={{ borderTopColor: couleur }}>
       <p className="text-sm text-macao-ink/55 mb-1">{titre}</p>
       {/* Les compteurs valent `null` et jamais 0 quand il n'y a rien à compter :
           ouTiret laisse donc passer un vrai 0 s'il arrive un jour. */}
@@ -96,11 +96,11 @@ export default function OrganisationDetail() {
     charger(true)
   }
 
-  if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
+  if (chargement) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-ink/60">Chargement…</div>
   if (!o) {
     return (
-      <div className="p-10">
-        <Link to="/organisations" className="text-sm text-macao-teal mb-4 inline-block">
+      <div className="px-4 py-6 sm:px-8 sm:py-10">
+        <Link to="/organisations" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">
           ← Tous les clients & prospects
         </Link>
         <p className="text-macao-terra">
@@ -121,8 +121,8 @@ export default function OrganisationDetail() {
   const interactions = Array.isArray(o.interactions) ? o.interactions : []
 
   return (
-    <div className="p-5 sm:p-10 max-w-5xl">
-      <Link to="/organisations" className="text-sm text-macao-teal mb-4 inline-block">
+    <div className="px-4 py-6 sm:p-10 max-w-5xl">
+      <Link to="/organisations" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">
         ← Tous les clients & prospects
       </Link>
 
@@ -161,7 +161,7 @@ export default function OrganisationDetail() {
           non résolu). D'où le ton ambre et la fermeture à la main. */}
       {avertissements.length > 0 && (
         <div className="mb-6 rounded-lg border border-macao-gold bg-macao-gold/15 px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <ul className="text-sm text-macao-ink space-y-1">
               {avertissements.map((a) => <li key={a}>{a}</li>)}
             </ul>
@@ -169,7 +169,7 @@ export default function OrganisationDetail() {
               type="button"
               onClick={() => setAvertissements([])}
               aria-label="Masquer les avertissements"
-              className="text-macao-ink/60 text-sm shrink-0"
+              className="min-h-[44px] shrink-0 px-2 text-sm text-macao-ink/60"
             >
               Fermer
             </button>
@@ -204,7 +204,7 @@ export default function OrganisationDetail() {
             {interlocuteurs.map((i, index) => (
               <li key={i.id || `interlocuteur-${index}`} className="border-b border-macao-ink/10 pb-4 last:border-0 last:pb-0">
                 <div className="flex flex-wrap items-center gap-3 mb-1">
-                  <span className="text-macao-ink font-medium">{ouTiret(i.nom)}</span>
+                  <span className="min-w-0 break-words text-macao-ink font-medium">{ouTiret(i.nom)}</span>
                   {/* Contrainte réglementaire : une opposition au démarchage doit
                       sauter aux yeux avant tout contact, pas se deviner. */}
                   {i.opposition && (
@@ -213,8 +213,8 @@ export default function OrganisationDetail() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-macao-ink/60">{ouTiret(i.fonction)}</p>
-                <p className="text-sm text-macao-ink/60">
+                <p className="break-words text-sm text-macao-ink/60">{ouTiret(i.fonction)}</p>
+                <p className="break-words text-sm text-macao-ink/60">
                   {ouTiret(i.email)} · {ouTiret(i.telephone)}
                 </p>
                 {i.notes && <p className="text-sm text-macao-ink/60 mt-1">{i.notes}</p>}
@@ -238,7 +238,7 @@ export default function OrganisationDetail() {
                 key={op.id || `opportunite-${index}`}
                 className="flex flex-wrap gap-x-8 gap-y-1 border-b border-macao-ink/10 pb-3 last:border-0 last:pb-0"
               >
-                <span className="text-macao-ink">{ouTiret(op.nom)}</span>
+                <span className="break-words text-macao-ink">{ouTiret(op.nom)}</span>
                 <span className="text-sm">
                   <span className="text-macao-ink/50">Statut </span>
                   <b>{ouTiret(op.statut)}</b>
@@ -263,7 +263,7 @@ export default function OrganisationDetail() {
                 key={d.id || `dossier-${index}`}
                 className="flex flex-wrap gap-x-8 gap-y-1 border-b border-macao-ink/10 pb-3 last:border-0 last:pb-0"
               >
-                <span className="text-macao-ink">{ouTiret(d.nom)}</span>
+                <span className="break-words text-macao-ink">{ouTiret(d.nom)}</span>
                 <span className="text-sm">
                   <span className="text-macao-ink/50">Statut </span>
                   <b>{ouTiret(d.statut)}</b>
@@ -294,9 +294,17 @@ export default function OrganisationDetail() {
             ['Particularités', ouTiret(o.particularites)],
             ['Notes', ouTiret(o.notes)]
           ].map(([label, valeur]) => (
-            <div key={label} className="flex border-b border-macao-ink/10 pb-3 last:border-0">
-              <span className="w-44 text-macao-ink/55 text-sm shrink-0">{label}</span>
-              <span className="text-macao-ink">{valeur}</span>
+            // Sous `sm` le libellé passe au-dessus de sa valeur : une colonne de
+            // 176 px sur un écran de 375 ne laissait à la valeur qu'une gouttière
+            // où « Communauté d'agglomération » se cassait en huit lignes.
+            // `gap-y` sépare les deux lignes une fois empilées, sans quoi elles
+            // se lisent comme un seul bloc.
+            <div
+              key={label}
+              className="flex flex-col gap-x-4 gap-y-0.5 border-b border-macao-ink/10 pb-3 last:border-0 sm:flex-row"
+            >
+              <span className="text-macao-ink/55 text-sm sm:w-44 sm:shrink-0">{label}</span>
+              <span className="min-w-0 break-words text-macao-ink">{valeur}</span>
             </div>
           ))}
         </div>

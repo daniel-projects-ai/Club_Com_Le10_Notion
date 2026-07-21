@@ -24,10 +24,10 @@ function LigneRelance({ tache, ton, onMarquerFaite, enCours }) {
       <div className="flex min-w-0 flex-1 gap-3">
         <Pastille ton={ton} />
         <div className="min-w-0">
-          <p className={`text-sm ${ton === 'retard' ? 'font-semibold text-macao-terra' : 'text-macao-ink'}`}>
+          <p className={`break-words text-sm ${ton === 'retard' ? 'font-semibold text-macao-terra' : 'text-macao-ink'}`}>
             {ouTiret(tache.intitule)}
           </p>
-          <p className="text-xs text-macao-ink/60">
+          <p className="break-words text-xs text-macao-ink/60">
             {ouTiret(tache.organisation)} · {formaterDate(tache.echeance)}
           </p>
         </div>
@@ -53,10 +53,10 @@ function LigneLien({ ton, libelle, precision, to }) {
       >
         <Pastille ton={ton} />
         <div className="min-w-0 flex-1">
-          <p className={`text-sm ${ton === 'retard' ? 'font-semibold text-macao-terra' : 'text-macao-ink'}`}>
+          <p className={`break-words text-sm ${ton === 'retard' ? 'font-semibold text-macao-terra' : 'text-macao-ink'}`}>
             {libelle}
           </p>
-          <p className="text-xs text-macao-ink/60">{precision}</p>
+          <p className="break-words text-xs text-macao-ink/60">{precision}</p>
         </div>
         <span aria-hidden="true" className="shrink-0 text-sm text-macao-teal">→</span>
       </Link>
@@ -83,14 +83,14 @@ export default function BlocATraiter({ donnees, onMarquerFaite, enCours = false 
   if (rienEnAttente && !relancesIndisponibles) {
     // Une bonne nouvelle mérite une phrase, pas un cadre vide.
     return (
-      <div className="rounded-xl bg-white p-5 shadow-sm">
+      <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
         <p className="text-sm text-macao-teal">Rien d'urgent aujourd'hui.</p>
       </div>
     )
   }
 
   return (
-    <div className={`rounded-xl bg-white p-5 shadow-sm ${enCours ? 'opacity-50' : ''}`}>
+    <div className={`rounded-xl bg-white p-4 shadow-sm sm:p-5 ${enCours ? 'opacity-50' : ''}`}>
       {relancesIndisponibles && (
         <p className="mb-3 text-sm text-macao-ink/50">
           Relances indisponibles : cette liste peut être incomplète.

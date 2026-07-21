@@ -127,8 +127,10 @@ export default function Shell() {
         </div>
       </nav>
 
-      {/* pt-14 : dégage la hauteur de l'en-tête fixe, qui n'existe plus à partir de lg. */}
-      <main className="h-full flex-1 overflow-y-auto pt-14 lg:pt-0">
+      {/* pt-14 : dégage la hauteur de l'en-tête fixe, qui n'existe plus à partir de lg.
+          min-w-0 : sans lui, un enfant flex garde `min-width: auto` et une ligne
+          large (URL, tableau) pousse la coquille au lieu de rester dans le cadre. */}
+      <main className="h-full min-w-0 flex-1 overflow-y-auto pt-14 lg:pt-0">
         <Outlet />
       </main>
     </div>

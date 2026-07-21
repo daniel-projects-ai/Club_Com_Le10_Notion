@@ -27,7 +27,7 @@ function Champ({ label, valeur }) {
   return (
     <div>
       <div className="text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400">{label}</div>
-      <div className="mt-0.5 text-sm text-macao-ink">{valeur}</div>
+      <div className="mt-0.5 break-words text-sm text-macao-ink">{valeur}</div>
     </div>
   )
 }
@@ -68,7 +68,7 @@ function BoutonInteret({ opp, onChange }) {
         disabled={enCours}
         title={opp.estPositionne ? 'Cliquez pour retirer votre positionnement' : undefined}
         className={[
-          'rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50',
+          'inline-flex min-h-[44px] items-center rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50',
           opp.estPositionne
             ? 'border border-macao-teal bg-cream-soft text-macao-teal hover:border-macao-terra hover:text-macao-terra'
             : 'bg-macao-terra text-white hover:opacity-90'
@@ -101,7 +101,7 @@ function LienOrganisation({ opp }) {
   return (
     <Link
       to={`/organisations/${premiere}`}
-      className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+      className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
     >
       Voir le client
     </Link>
@@ -148,7 +148,7 @@ function BoutonCreerDossier({ opp, onCree }) {
         type="button"
         onClick={creer}
         disabled={enCours}
-        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
+        className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
       >
         {enCours ? 'Création…' : 'Créer le devis'}
       </button>
@@ -178,12 +178,12 @@ function SelecteurStatut({ opp, onChange }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:items-end">
       <select
         value={opp.status || ''}
         disabled={etat === 'envoi'}
         onChange={(e) => changer(e.target.value)}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs text-macao-ink disabled:opacity-50"
+        className="min-h-[44px] w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-macao-ink disabled:opacity-50 sm:w-auto"
       >
         {!opp.status && <option value="">Sans statut</option>}
         {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -225,7 +225,7 @@ function BlocPositionnements({ opportuniteId }) {
       <button
         type="button"
         onClick={basculer}
-        className="text-xs font-semibold text-macao-teal hover:text-macao-terra"
+        className="inline-flex min-h-[44px] items-center text-xs font-semibold text-macao-teal hover:text-macao-terra"
       >
         {ouvert ? '▾' : '▸'} Positionnements
         {liste !== null && ` (${liste.length})`}
@@ -241,7 +241,7 @@ function BlocPositionnements({ opportuniteId }) {
           {liste && liste.length > 0 && (
             <ul className="space-y-2">
               {liste.map((p) => (
-                <li key={p.id} className="flex items-baseline justify-between gap-4 text-xs">
+                <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
                   <span>
                     <span className="font-semibold text-macao-ink">{p.nom}</span>
                     {p.metiers?.length > 0 && (
@@ -310,11 +310,11 @@ export default function Opportunities() {
     return () => { annule = true }
   }, [estMacao])
 
-  if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les projets : {erreur}</p>
+  if (chargement) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-neutral-500">Chargement…</p>
+  if (erreur) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-macao-terra">Impossible de charger les projets : {erreur}</p>
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
       <BarreActions
         titre="Projets"
         sousTitre={`${opportunites.length} projet${opportunites.length > 1 ? 's' : ''} visible${opportunites.length > 1 ? 's' : ''}`}
@@ -324,7 +324,7 @@ export default function Opportunities() {
           projets, un pipeline calculé sur cette part lui donnerait une vue
           fausse de l'activité de l'agence. */}
       {estMacao && opportunites.length > 0 && (
-        <section className="mb-10 rounded-xl bg-white p-6 shadow-sm">
+        <section className="mb-10 rounded-xl bg-white p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 font-serif text-xl text-macao-ink">Pipeline par statut</h2>
           <PipelineBars parStatut={parStatut} />
         </section>
@@ -335,15 +335,15 @@ export default function Opportunities() {
       ) : (
         <div className="space-y-4">
           {opportunites.map((opp) => (
-            <article key={opp.id} className="rounded-xl border-l-4 border-macao-terra bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="font-serif text-xl text-macao-ink">{opp.name}</h2>
+            <article key={opp.id} className="rounded-xl border-l-4 border-macao-terra bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="min-w-0 break-words font-serif text-xl text-macao-ink">{opp.name}</h2>
                 {estMacao
                   ? <SelecteurStatut opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
                   : <StatutPastille statut={opp.status} />}
               </div>
-              <div className="mt-1 text-sm font-medium text-macao-teal">{ouTiret(opp.client)}</div>
-              {opp.objet && <p className="mt-3 text-sm leading-relaxed text-neutral-600">{opp.objet}</p>}
+              <div className="mt-1 break-words text-sm font-medium text-macao-teal">{ouTiret(opp.client)}</div>
+              {opp.objet && <p className="mt-3 break-words text-sm leading-relaxed text-neutral-600">{opp.objet}</p>}
               <div className="mt-5 grid gap-4 border-t border-neutral-100 pt-4 sm:grid-cols-3">
                 <Champ label="Budget" valeur={formaterBudget(opp.budget)} />
                 <Champ label="Échéance" valeur={formaterDate(opp.deadline)} />
@@ -357,7 +357,7 @@ export default function Opportunities() {
                     ? (
                       <Link
                         to={`/dossiers/${dossiersParOpportunite[opp.id]}`}
-                        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+                        className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
                       >
                         Voir le devis
                       </Link>

@@ -81,8 +81,8 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
   }
 
   return (
-    <form onSubmit={envoyer} className="bg-white rounded-xl p-5 space-y-4 border border-macao-ink/10">
-      <p className="font-serif text-lg text-macao-ink">
+    <form onSubmit={envoyer} className="bg-white rounded-xl p-4 sm:p-5 space-y-4 border border-macao-ink/10">
+      <p className="break-words font-serif text-lg text-macao-ink">
         Journaliser un échange{organisation?.nom ? ` — ${organisation.nom}` : ''}
       </p>
 
@@ -95,7 +95,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
               type="button"
               onClick={() => setCanal(c)}
               aria-pressed={canal === c}
-              className={`px-3 py-1.5 rounded-lg text-sm border ${
+              className={`min-h-[44px] px-3 py-2 rounded-lg text-sm border ${
                 canal === c
                   ? 'bg-macao-teal border-macao-teal text-white'
                   : 'bg-white border-macao-ink/15 text-macao-ink'
@@ -109,14 +109,14 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
 
       <div>
         <p className="text-xs text-macao-ink/60 mb-2">Sens</p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['Sortant', 'Entrant'].map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setSens(s)}
               aria-pressed={sens === s}
-              className={`px-3 py-1.5 rounded-lg text-sm border ${
+              className={`min-h-[44px] px-3 py-2 rounded-lg text-sm border ${
                 sens === s
                   ? 'bg-macao-ink border-macao-ink text-white'
                   : 'bg-white border-macao-ink/15 text-macao-ink'
@@ -135,7 +135,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink"
+          className="w-full min-h-[44px] border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink sm:w-auto"
         />
       </div>
 
@@ -162,7 +162,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
           id="echange-interlocuteur"
           value={interlocuteurId}
           onChange={(e) => setInterlocuteurId(e.target.value)}
-          className="w-full border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink bg-white"
+          className="w-full min-h-[44px] border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink bg-white"
         >
           <option value="">—</option>
           {interlocuteurs.map((i) => (
@@ -187,9 +187,10 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
         </p>
       )}
 
-      <label className="flex items-center gap-2 text-sm text-macao-ink/70">
+      <label className="flex min-h-[44px] items-center gap-3 text-sm text-macao-ink/70">
         <input
           type="checkbox"
+          className="h-5 w-5 shrink-0"
           checked={assisteeIA}
           onChange={(e) => setAssisteeIA(e.target.checked)}
         />
@@ -197,9 +198,10 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
       </label>
 
       <div className="rounded-lg border border-macao-teal/30 bg-macao-teal/5 p-3">
-        <label className="flex items-center gap-2 text-sm font-semibold text-macao-ink">
+        <label className="flex min-h-[44px] items-center gap-3 text-sm font-semibold text-macao-ink">
           <input
             type="checkbox"
+            className="h-5 w-5 shrink-0"
             checked={prevoirRelance}
             onChange={(e) => setPrevoirRelance(e.target.checked)}
           />
@@ -222,7 +224,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
                 // dans le DOM et ne bloque donc pas l'envoi.
                 required
                 placeholder="Rappeler pour…"
-                className="w-full border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink"
+                className="w-full min-h-[44px] border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink"
               />
             </div>
             <div>
@@ -234,7 +236,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
                 type="date"
                 value={echeanceRelance}
                 onChange={(e) => setEcheanceRelance(e.target.value)}
-                className="border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink"
+                className="w-full min-h-[44px] border border-macao-ink/15 rounded-lg px-3 py-2 text-macao-ink sm:w-auto"
               />
             </div>
           </div>
@@ -253,11 +255,11 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
         </p>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           type="submit"
           disabled={enCours}
-          className="px-4 py-2 rounded-lg bg-macao-terra text-white text-sm disabled:opacity-50"
+          className="min-h-[44px] px-4 py-2 rounded-lg bg-macao-terra text-white text-sm disabled:opacity-50"
         >
           {enCours ? 'Enregistrement…' : 'Enregistrer'}
         </button>
@@ -266,7 +268,7 @@ export default function FormulaireEchange({ organisation, onEnregistre, onAnnule
             type="button"
             onClick={onAnnuler}
             disabled={enCours}
-            className="px-4 py-2 rounded-lg border border-macao-ink/15 text-sm text-macao-ink disabled:opacity-50"
+            className="min-h-[44px] px-4 py-2 rounded-lg border border-macao-ink/15 text-sm text-macao-ink disabled:opacity-50"
           >
             Annuler
           </button>

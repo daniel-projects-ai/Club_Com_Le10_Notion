@@ -2,20 +2,21 @@ import { formaterDate, ouTiret } from '../../lib/format'
 
 function Ligne({ tache, onMarquerFaite, enCours, accent }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 py-2">
-      <div className="min-w-0">
-        <p className={`text-sm ${accent ? 'text-macao-terra font-semibold' : 'text-macao-ink'}`}>
+    <li className="flex min-h-[44px] flex-wrap items-center justify-between gap-3 py-2">
+      <div className="min-w-0 flex-1">
+        <p className={`break-words text-sm ${accent ? 'text-macao-terra font-semibold' : 'text-macao-ink'}`}>
           {ouTiret(tache.intitule)}
         </p>
-        <p className="text-xs text-macao-ink/60">
+        <p className="break-words text-xs text-macao-ink/60">
           {ouTiret(tache.organisation)} · {formaterDate(tache.echeance)} · {ouTiret(tache.responsable)}
         </p>
       </div>
+      {/* min-h-[44px] : « Fait » se tape au doigt en sortant d'un rendez-vous. */}
       <button
         type="button"
         onClick={() => onMarquerFaite?.(tache.id)}
         disabled={enCours || !onMarquerFaite}
-        className="px-3 py-1.5 rounded-lg border border-macao-teal text-macao-teal text-xs disabled:opacity-50 shrink-0"
+        className="min-h-[44px] shrink-0 rounded-lg border border-macao-teal px-4 py-2 text-xs text-macao-teal disabled:opacity-50"
       >
         Fait
       </button>
@@ -48,7 +49,7 @@ export default function BlocRelances({ relances, onMarquerFaite, enCours = false
   // doit pas être confondu avec « aucune relance », qui est une bonne nouvelle.
   if (!relances) {
     return (
-      <div className="bg-white rounded-xl p-5 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm sm:p-5">
         <p className="text-sm text-macao-ink/50">Relances indisponibles.</p>
       </div>
     )
@@ -60,14 +61,14 @@ export default function BlocRelances({ relances, onMarquerFaite, enCours = false
 
   if (!enRetard.length && !cetteSemaine.length && !plusTard.length) {
     return (
-      <div className="bg-white rounded-xl p-5 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm sm:p-5">
         <p className="text-sm text-macao-teal">Aucune relance en attente. Tout est à jour.</p>
       </div>
     )
   }
 
   return (
-    <div className={`bg-white rounded-xl p-5 shadow-sm space-y-4 ${enCours ? 'opacity-50' : ''}`}>
+    <div className={`bg-white rounded-xl p-4 shadow-sm space-y-4 sm:p-5 ${enCours ? 'opacity-50' : ''}`}>
       <Groupe
         titre="En retard"
         taches={enRetard}

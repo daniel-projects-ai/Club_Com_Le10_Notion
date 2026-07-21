@@ -9,8 +9,10 @@ export default function BarreActions({ titre, sousTitre, children }) {
   return (
     <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <h1 className="font-serif text-3xl text-macao-ink">{titre}</h1>
-        {sousTitre && <p className="mt-1 text-sm text-macao-ink/60">{sousTitre}</p>}
+        {/* break-words : un nom de collectivité tient rarement sur 375 px, et
+            sans césure il pousserait toute la page vers la droite. */}
+        <h1 className="font-serif text-2xl text-macao-ink break-words sm:text-3xl">{titre}</h1>
+        {sousTitre && <p className="mt-1 text-sm text-macao-ink/60 break-words">{sousTitre}</p>}
       </div>
 
       {/* Rien à afficher plutôt qu'un conteneur vide : sans ce test, la grille

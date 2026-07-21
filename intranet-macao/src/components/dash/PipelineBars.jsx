@@ -13,8 +13,10 @@ export default function PipelineBars({ parStatut = {} }) {
   return (
     <div className="space-y-3">
       {entrees.map(([statut, nombre]) => (
-        <div key={statut} className="flex items-center gap-4">
-          <div className="w-40 shrink-0 truncate text-sm text-neutral-700" title={statut}>{statut}</div>
+        <div key={statut} className="flex items-center gap-3 sm:gap-4">
+          {/* Le libellé cède de la place à la barre sur petit écran : à 375 px,
+              160 px de statut ne laissaient qu'un moignon de barre à comparer. */}
+          <div className="w-24 shrink-0 truncate text-sm text-neutral-700 sm:w-40" title={statut}>{statut}</div>
           <div className="h-3 flex-1 overflow-hidden rounded-full bg-neutral-200">
             <div
               className="h-full rounded-full bg-macao-teal"
