@@ -218,6 +218,32 @@ Le séquencement validé avec le client :
 
 Chaque module embarque son propre tableau de bord ; la vue dirigeant se consolide au fur et à mesure. **Un tableau de bord n'est pas un module, c'est une conséquence** — il ne peut afficher que ce que les modules alimentent.
 
+## 12 bis. ⚠️ L'interface et Airtable parlent deux langues
+
+Refonte ergonomique du **2026-07-21**, motivée par un retour sans détour du client : *« l'ergonomie de l'intranet en l'état est incompréhensible »*, et surtout — **l'interface ne devait plus laisser croire que l'intranet est dédié aux appels d'offres**. L'agence a aussi des clients directs, de la prospection et une communauté de coworkers.
+
+**Correspondance à connaître avant toute modification :**
+
+| À l'écran | Dans Airtable / le code |
+|---|---|
+| Projets | Opportunités (`tbl3jvmo4VjUDTkmD`) |
+| Devis | Dossiers de réponse (`tblp59OuT0dDNFuc1`) |
+| Clients & prospects | Organisations (`tblMONv5vnC3Bn0ii`) |
+| Communauté | Coworkers (`tbl89xazn0oY4A18o`) |
+| Aujourd'hui | route `/` (ex-tableau de bord) |
+
+Les **routes n'ont pas changé** : `/opportunites`, `/dossiers`, `/organisations`, `/annuaire`. Les **valeurs de statut non plus** (`À analyser`, `GO`, `Déposé`…) — les renommer casserait l'écriture Airtable.
+
+Choix assumé : aligner les noms Airtable aurait touché tout le code d'écriture pour un bénéfice nul côté utilisateur.
+
+**Ce que la refonte a changé** — menu 6 → 4 entrées (`/dossiers` sort du menu, la route reste active : les devis se rejoignent depuis un projet et depuis Aujourd'hui) · tableau de bord 12 → 4 indicateurs, précédés d'un bloc « À traiter » actionnable · barres d'actions en haut à droite · sections repliables sur les fiches · **support mobile** (tiroir escamotable, cibles 44 px, aucun débordement à 375 px).
+
+**Deux règles nées de la revue, à ne pas défaire :**
+- **Ne jamais afficher « Rien d'urgent » quand une donnée est indisponible.** Le serveur renvoie `null` pour signaler une panne ; le transformer en `0` produirait un écran rassurant et faux.
+- **Les trois paniers de relances doivent rester visibles**, `plusTard` compris : il recueille les relances créées sans échéance, qui seraient sinon invisibles à jamais.
+
+**Dette** : `dossiersEnCours` compte les devis dont le champ `Résultat` vaut `En cours` — donc une *issue non tranchée*, pas un travail en cours. Le libellé dit « Devis ouverts ». Le compteur dérivera si personne ne clôt les devis dans Airtable ; aucun code ne peut le rattraper.
+
 ## 13. Documents de référence
 
 | Document | Contenu |
