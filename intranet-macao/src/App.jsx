@@ -16,7 +16,7 @@ import Profile from './pages/Profile'
 // on n'affiche ni la coquille ni la page de connexion (évite un clignotement).
 function Protege() {
   const { user, chargement } = useAuth()
-  if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
+  if (chargement) return <p className="px-4 py-6 text-sm text-neutral-500 sm:px-8 sm:py-10">Chargement…</p>
   if (!user) return <Navigate to="/connexion" replace />
   return <Shell />
 }

@@ -18,26 +18,26 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-full bg-macao-ink flex items-center justify-center px-6 py-16">
+    <div className="min-h-full bg-macao-ink flex items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
       <div className="w-full max-w-md">
         <header className="text-center mb-10">
-          <h1 className="font-serif text-4xl text-white">Intranet Macao</h1>
+          <h1 className="font-serif text-3xl text-white sm:text-4xl">Intranet Macao</h1>
           <p className="mt-3 text-2xs uppercase tracking-[0.28em] text-macao-gold">
             l'agence créative haute en couleur
           </p>
         </header>
 
         {envoye ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-xl">
+          <div className="bg-white rounded-2xl p-6 text-center shadow-xl sm:p-8">
             <div className="text-4xl" aria-hidden="true">📬</div>
             <h2 className="mt-4 font-serif text-2xl text-macao-ink">Vérifiez vos emails</h2>
             <p className="mt-3 text-sm leading-relaxed text-neutral-600">
               Si ce compte existe, un lien de connexion valable 15 minutes vient d'être envoyé à{' '}
-              <span className="font-medium text-macao-ink">{email}</span>.
+              <span className="font-medium text-macao-ink break-all">{email}</span>.
             </p>
           </div>
         ) : (
-          <form onSubmit={soumettre} className="bg-white rounded-2xl p-8 shadow-xl">
+          <form onSubmit={soumettre} className="bg-white rounded-2xl p-6 shadow-xl sm:p-8">
             <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-widest text-neutral-500">
               Adresse email
             </label>
@@ -49,12 +49,12 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="prenom.nom@exemple.fr"
-              className="mt-2 w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm text-macao-ink outline-none focus:border-macao-terra focus:ring-2 focus:ring-macao-terra/20"
+              className="mt-2 min-h-[44px] w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm text-macao-ink outline-none focus:border-macao-terra focus:ring-2 focus:ring-macao-terra/20"
             />
             <button
               type="submit"
               disabled={envoi}
-              className="mt-5 w-full rounded-lg bg-macao-terra px-4 py-3 text-sm font-semibold text-white transition hover:bg-macao-terra/90 disabled:opacity-60"
+              className="mt-5 min-h-[44px] w-full rounded-lg bg-macao-terra px-4 py-3 text-sm font-semibold text-white transition hover:bg-macao-terra/90 disabled:opacity-60"
             >
               {envoi ? 'Envoi…' : 'Recevoir mon lien de connexion'}
             </button>

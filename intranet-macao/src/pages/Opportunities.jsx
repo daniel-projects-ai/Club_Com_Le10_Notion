@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
 import StatutPastille from '../components/StatutPastille'
+import BarreActions from '../components/BarreActions'
+import PipelineBars from '../components/dash/PipelineBars'
 import { formaterBudget, formaterDate, ouTiret } from '../lib/format'
 
 // Même liste fermée que côté serveur (STATUTS_OPPORTUNITE). Le front s'en
@@ -25,7 +27,7 @@ function Champ({ label, valeur }) {
   return (
     <div>
       <div className="text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400">{label}</div>
-      <div className="mt-0.5 text-sm text-macao-ink">{valeur}</div>
+      <div className="mt-0.5 break-words text-sm text-macao-ink">{valeur}</div>
     </div>
   )
 }
@@ -66,7 +68,7 @@ function BoutonInteret({ opp, onChange }) {
         disabled={enCours}
         title={opp.estPositionne ? 'Cliquez pour retirer votre positionnement' : undefined}
         className={[
-          'rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50',
+          'inline-flex min-h-[44px] items-center rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50',
           opp.estPositionne
             ? 'border border-macao-teal bg-cream-soft text-macao-teal hover:border-macao-terra hover:text-macao-terra'
             : 'bg-macao-terra text-white hover:opacity-90'
@@ -83,15 +85,15 @@ function BoutonInteret({ opp, onChange }) {
 }
 
 // Rattachement CRM — réservé à Macao. L'absence de rattachement n'est pas un
-// détail décoratif : sans elle rien ne signale que l'opportunité sortira de
-// l'historique de l'organisation, et le CRM se vide en silence.
+// détail décoratif : sans elle rien ne signale que le projet sortira de
+// l'historique du client, et le CRM se vide en silence.
 function LienOrganisation({ opp }) {
   const [premiere] = Array.isArray(opp.organisationIds) ? opp.organisationIds : []
 
   if (!premiere) {
     return (
       <span className="self-center text-xs italic text-neutral-500">
-        Aucune organisation rattachée
+        Aucun client rattaché
       </span>
     )
   }
@@ -99,20 +101,20 @@ function LienOrganisation({ opp }) {
   return (
     <Link
       to={`/organisations/${premiere}`}
-      className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+      className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
     >
-      Voir l’organisation
+      Voir le client
     </Link>
   )
 }
 
-// Un dossier de réponse ne se justifie qu'une fois la décision de répondre prise :
-// inutile de proposer la création sur une opportunité encore à analyser ou abandonnée.
+// Un devis ne se justifie qu'une fois la décision de répondre prise : inutile
+// de proposer la création sur un projet encore à analyser ou abandonné.
 const STATUTS_AVEC_DOSSIER = ['GO', 'Transmis au Club', 'En réponse']
 
-// Création du dossier de réponse — réservé à Macao (le serveur renvoie 403 aux autres).
-// L'état vit dans le composant, donc par carte : une erreur sur l'opportunité A
-// ne peut pas s'afficher sous l'opportunité B.
+// Création du devis — réservée à Macao (le serveur renvoie 403 aux autres).
+// L'état vit dans le composant, donc par carte : une erreur sur le projet A
+// ne peut pas s'afficher sous le projet B.
 function BoutonCreerDossier({ opp, onCree }) {
   const navigate = useNavigate()
   const [enCours, setEnCours] = useState(false)
@@ -132,7 +134,7 @@ function BoutonCreerDossier({ opp, onCree }) {
       // message renvoyé par le serveur (« Un dossier existe déjà »).
       setErreur(
         /dossier existe d[ée]j[àa]/i.test(e.message || '')
-          ? 'Un dossier existe déjà pour cette opportunité'
+          ? 'Un devis existe déjà pour ce projet'
           : 'La création a échoué'
       )
     } finally {
@@ -146,9 +148,9 @@ function BoutonCreerDossier({ opp, onCree }) {
         type="button"
         onClick={creer}
         disabled={enCours}
-        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
+        className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
       >
-        {enCours ? 'Création…' : 'Créer le dossier de réponse'}
+        {enCours ? 'Création…' : 'Créer le devis'}
       </button>
       {erreur && <p className="mt-1 text-2xs text-macao-terra">{erreur}</p>}
     </div>
@@ -176,12 +178,12 @@ function SelecteurStatut({ opp, onChange }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:items-end">
       <select
         value={opp.status || ''}
         disabled={etat === 'envoi'}
         onChange={(e) => changer(e.target.value)}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs text-macao-ink disabled:opacity-50"
+        className="min-h-[44px] w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-macao-ink disabled:opacity-50 sm:w-auto"
       >
         {!opp.status && <option value="">Sans statut</option>}
         {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -223,7 +225,7 @@ function BlocPositionnements({ opportuniteId }) {
       <button
         type="button"
         onClick={basculer}
-        className="text-xs font-semibold text-macao-teal hover:text-macao-terra"
+        className="inline-flex min-h-[44px] items-center text-xs font-semibold text-macao-teal hover:text-macao-terra"
       >
         {ouvert ? '▾' : '▸'} Positionnements
         {liste !== null && ` (${liste.length})`}
@@ -239,7 +241,7 @@ function BlocPositionnements({ opportuniteId }) {
           {liste && liste.length > 0 && (
             <ul className="space-y-2">
               {liste.map((p) => (
-                <li key={p.id} className="flex items-baseline justify-between gap-4 text-xs">
+                <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
                   <span>
                     <span className="font-semibold text-macao-ink">{p.nom}</span>
                     {p.metiers?.length > 0 && (
@@ -271,9 +273,24 @@ export default function Opportunities() {
     setOpportunites((liste) => liste.map(o => (o.id === id ? { ...o, ...champs } : o)))
   }
 
-  // Correspondance opportunité → dossier existant, pour ne pas proposer une
-  // création qui échouerait en 409. Seul Macao voit ces boutons : inutile de
-  // faire porter l'appel aux autres rôles.
+  // Répartition par statut, calculée sur les projets déjà chargés — aucun appel
+  // réseau supplémentaire. Même règle que le serveur (« Sans statut » pour un
+  // statut vide, comptage sur la même liste que celle rendue par /opportunities),
+  // donc le même résultat qu'au tableau de bord ; à ceci près qu'un changement
+  // de statut fait ici se répercute aussitôt, là où la valeur du serveur
+  // attendait un rechargement.
+  const parStatut = useMemo(() => {
+    const compte = {}
+    for (const opp of opportunites) {
+      const statut = opp.status || 'Sans statut'
+      compte[statut] = (compte[statut] || 0) + 1
+    }
+    return compte
+  }, [opportunites])
+
+  // Correspondance projet → devis existant, pour ne pas proposer une création
+  // qui échouerait en 409. Seul Macao voit ces boutons : inutile de faire porter
+  // l'appel aux autres rôles.
   const [dossiersParOpportunite, setDossiersParOpportunite] = useState({})
   useEffect(() => {
     if (!estMacao) return
@@ -293,32 +310,40 @@ export default function Opportunities() {
     return () => { annule = true }
   }, [estMacao])
 
-  if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les opportunités : {erreur}</p>
+  if (chargement) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-neutral-500">Chargement…</p>
+  if (erreur) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-macao-terra">Impossible de charger les projets : {erreur}</p>
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Opportunités</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {opportunites.length} opportunité{opportunites.length > 1 ? 's' : ''} visible{opportunites.length > 1 ? 's' : ''}
-        </p>
-      </header>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
+      <BarreActions
+        titre="Projets"
+        sousTitre={`${opportunites.length} projet${opportunites.length > 1 ? 's' : ''} visible${opportunites.length > 1 ? 's' : ''}`}
+      />
+
+      {/* Pilotage réservé à Macao : un coworker ne voit qu'une partie des
+          projets, un pipeline calculé sur cette part lui donnerait une vue
+          fausse de l'activité de l'agence. */}
+      {estMacao && opportunites.length > 0 && (
+        <section className="mb-10 rounded-xl bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="mb-4 font-serif text-xl text-macao-ink">Pipeline par statut</h2>
+          <PipelineBars parStatut={parStatut} />
+        </section>
+      )}
 
       {opportunites.length === 0 ? (
-        <p className="text-sm text-neutral-500">Aucune opportunité à afficher pour le moment.</p>
+        <p className="text-sm text-neutral-500">Aucun projet à afficher pour le moment.</p>
       ) : (
         <div className="space-y-4">
           {opportunites.map((opp) => (
-            <article key={opp.id} className="rounded-xl border-l-4 border-macao-terra bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="font-serif text-xl text-macao-ink">{opp.name}</h2>
+            <article key={opp.id} className="rounded-xl border-l-4 border-macao-terra bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="min-w-0 break-words font-serif text-xl text-macao-ink">{opp.name}</h2>
                 {estMacao
                   ? <SelecteurStatut opp={opp} onChange={(c) => majOpportunite(opp.id, c)} />
                   : <StatutPastille statut={opp.status} />}
               </div>
-              <div className="mt-1 text-sm font-medium text-macao-teal">{ouTiret(opp.client)}</div>
-              {opp.objet && <p className="mt-3 text-sm leading-relaxed text-neutral-600">{opp.objet}</p>}
+              <div className="mt-1 break-words text-sm font-medium text-macao-teal">{ouTiret(opp.client)}</div>
+              {opp.objet && <p className="mt-3 break-words text-sm leading-relaxed text-neutral-600">{opp.objet}</p>}
               <div className="mt-5 grid gap-4 border-t border-neutral-100 pt-4 sm:grid-cols-3">
                 <Champ label="Budget" valeur={formaterBudget(opp.budget)} />
                 <Champ label="Échéance" valeur={formaterDate(opp.deadline)} />
@@ -332,9 +357,9 @@ export default function Opportunities() {
                     ? (
                       <Link
                         to={`/dossiers/${dossiersParOpportunite[opp.id]}`}
-                        className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
+                        className="inline-flex min-h-[44px] items-center rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
                       >
-                        Voir le dossier de réponse
+                        Voir le devis
                       </Link>
                     )
                     : (

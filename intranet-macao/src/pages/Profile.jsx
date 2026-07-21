@@ -1,15 +1,18 @@
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
+import BarreActions from '../components/BarreActions'
 import { ouTiret } from '../lib/format'
 
 function Ligne({ label, valeur }) {
   return (
-    <div className="flex flex-col gap-1 border-b border-neutral-100 px-6 py-4 last:border-b-0 sm:flex-row sm:items-center">
-      <div className="w-44 shrink-0 text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+    // `w-44` ne vaut qu'à partir de `sm` : empilée, la colonne fixe réservait
+    // 176 px à un libellé de trois mots et poussait la valeur hors du cadre.
+    <div className="flex flex-col gap-1 border-b border-neutral-100 px-4 py-4 last:border-b-0 sm:flex-row sm:items-center sm:px-6">
+      <div className="text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400 sm:w-44 sm:shrink-0">
         {label}
       </div>
-      <div className="text-sm text-macao-ink">{valeur}</div>
+      <div className="min-w-0 break-words text-sm text-macao-ink">{valeur}</div>
     </div>
   )
 }
@@ -18,18 +21,18 @@ export default function Profile() {
   const { donnees, chargement, erreur } = useRequete(api.profil)
   const { user } = useAuth()
 
-  if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger votre profil : {erreur}</p>
+  if (chargement) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-neutral-500">Chargement…</p>
+  if (erreur) return <p className="px-4 py-6 sm:px-8 sm:py-10 text-sm text-macao-terra">Impossible de charger votre profil : {erreur}</p>
 
   const profil = donnees || {}
   const metiers = (profil.metiers || []).join(', ')
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Mon profil</h1>
-        <p className="mt-1 text-sm text-neutral-500">Vos informations telles qu'elles apparaissent dans l'annuaire</p>
-      </header>
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
+      <BarreActions
+        titre="Mon profil"
+        sousTitre="Vos informations telles qu'elles apparaissent dans la Communauté"
+      />
 
       <div className="rounded-xl bg-white shadow-sm">
         <Ligne label="Nom" valeur={ouTiret(profil.nom)} />
@@ -42,7 +45,14 @@ export default function Profile() {
           label="Portfolio"
           valeur={
             profil.portfolio ? (
-              <a href={profil.portfolio} target="_blank" rel="noreferrer" className="text-macao-terra hover:underline">
+              // break-all + 44 px : une URL de portfolio est longue et sans
+              // espace, et le lien doit rester atteignable au doigt.
+              <a
+                href={profil.portfolio}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[44px] items-center break-all text-macao-terra hover:underline"
+              >
                 {profil.portfolio}
               </a>
             ) : (

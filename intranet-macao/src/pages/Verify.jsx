@@ -29,15 +29,15 @@ export default function Verify() {
   }, [params, navigate, setUser])
 
   return (
-    <div className="min-h-full bg-macao-ink flex items-center justify-center px-6 py-16">
+    <div className="min-h-full bg-macao-ink flex items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
       <div className="w-full max-w-md">
         {erreur ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-xl">
+          <div className="bg-white rounded-2xl p-6 text-center shadow-xl sm:p-8">
             <h1 className="font-serif text-2xl text-macao-ink">Connexion impossible</h1>
             <p className="mt-3 text-sm text-neutral-600">{erreur}</p>
             <Link
               to="/connexion"
-              className="mt-6 inline-block rounded-lg bg-macao-terra px-5 py-3 text-sm font-semibold text-white transition hover:bg-macao-terra/90"
+              className="mt-6 inline-flex min-h-[44px] items-center rounded-lg bg-macao-terra px-5 py-3 text-sm font-semibold text-white transition hover:bg-macao-terra/90"
             >
               Demander un nouveau lien
             </Link>

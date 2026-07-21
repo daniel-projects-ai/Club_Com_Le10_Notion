@@ -4,6 +4,8 @@ import { api } from '../lib/api'
 import { formaterDate, ouTiret } from '../lib/format'
 import FormulaireEchange from '../components/FormulaireEchange'
 import JournalEchange from '../components/JournalEchange'
+import BarreActions from '../components/BarreActions'
+import SectionRepliable from '../components/SectionRepliable'
 
 // Le site web est saisi dans Airtable : ce n'est pas forcément une URL exploitable.
 function SiteWeb({ url }) {
@@ -23,7 +25,7 @@ function SiteWeb({ url }) {
 
 function Compteur({ titre, valeur, couleur }) {
   return (
-    <div className="bg-white rounded-xl p-5 border-t-4" style={{ borderTopColor: couleur }}>
+    <div className="bg-white rounded-xl p-4 sm:p-5 border-t-4" style={{ borderTopColor: couleur }}>
       <p className="text-sm text-macao-ink/55 mb-1">{titre}</p>
       {/* Les compteurs valent `null` et jamais 0 quand il n'y a rien à compter :
           ouTiret laisse donc passer un vrai 0 s'il arrive un jour. */}
@@ -94,17 +96,17 @@ export default function OrganisationDetail() {
     charger(true)
   }
 
-  if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
+  if (chargement) return <div className="px-4 py-6 sm:px-8 sm:py-10 text-macao-ink/60">Chargement…</div>
   if (!o) {
     return (
-      <div className="p-10">
-        <Link to="/organisations" className="text-sm text-macao-teal mb-4 inline-block">
-          ← Toutes les organisations
+      <div className="px-4 py-6 sm:px-8 sm:py-10">
+        <Link to="/organisations" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">
+          ← Tous les clients & prospects
         </Link>
         <p className="text-macao-terra">
           {erreurChargement
-            ? `Impossible d’afficher cette organisation : ${erreurChargement}`
-            : 'Organisation indisponible.'}
+            ? `Impossible d’afficher cette fiche : ${erreurChargement}`
+            : 'Fiche indisponible.'}
         </p>
       </div>
     )
@@ -119,25 +121,84 @@ export default function OrganisationDetail() {
   const interactions = Array.isArray(o.interactions) ? o.interactions : []
 
   return (
-    <div className="p-10 max-w-5xl">
-      <Link to="/organisations" className="text-sm text-macao-teal mb-4 inline-block">
-        ← Toutes les organisations
+    <div className="px-4 py-6 sm:p-10 max-w-5xl">
+      <Link to="/organisations" className="mb-4 inline-flex min-h-[44px] items-center text-sm text-macao-teal">
+        ← Tous les clients & prospects
       </Link>
 
-      <h1 className="font-serif text-3xl text-macao-ink mb-1">{o.nom}</h1>
-      <p className="text-macao-ink/60 mb-8">
-        {ouTiret(o.type)} · {ouTiret(o.commune)} · {ouTiret(o.niveauRelation)}
-      </p>
+      {/* La seule action de la fiche monte dans la barre : la chercher au milieu
+          d'un empilement de sections était le principal reproche du client. */}
+      <BarreActions
+        titre={o.nom}
+        sousTitre={`${ouTiret(o.type)} · ${ouTiret(o.commune)} · ${ouTiret(o.niveauRelation)}`}
+      >
+        {!formulaireOuvert && (
+          <button
+            type="button"
+            onClick={() => { setAvertissements([]); setFormulaireOuvert(true) }}
+            className="min-h-[44px] px-4 py-2 rounded-lg bg-macao-terra text-white text-sm font-semibold"
+          >
+            Noter un échange
+          </button>
+        )}
+      </BarreActions>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Compteur titre="Opportunités" valeur={historique.nbOpportunites} couleur="#206b73" />
-        <Compteur titre="Dossiers déposés" valeur={historique.nbDossiersDeposes} couleur="#e9a94e" />
+      {/* Le formulaire et les retours de l'enregistrement vivent au niveau de la
+          page, à côté du bouton qui les déclenche : logés dans le journal, ils
+          disparaîtraient avec lui dès qu'on replie la section. */}
+      {formulaireOuvert && (
+        <div className="mb-6">
+          <FormulaireEchange
+            organisation={o}
+            onEnregistre={echangeEnregistre}
+            onAnnuler={() => setFormulaireOuvert(false)}
+          />
+        </div>
+      )}
+
+      {/* Ce ne sont pas des erreurs : l'échange est bien enregistré, mais le
+          serveur signale ce qu'il n'a pas pu faire (relance sans date, auteur
+          non résolu). D'où le ton ambre et la fermeture à la main. */}
+      {avertissements.length > 0 && (
+        <div className="mb-6 rounded-lg border border-macao-gold bg-macao-gold/15 px-4 py-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <ul className="text-sm text-macao-ink space-y-1">
+              {avertissements.map((a) => <li key={a}>{a}</li>)}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setAvertissements([])}
+              aria-label="Masquer les avertissements"
+              className="min-h-[44px] shrink-0 px-2 text-sm text-macao-ink/60"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fiche à l'écran malgré une erreur : c'est un rechargement discret qui
+          a échoué, le journal affiché peut donc être en retard d'un échange. */}
+      {erreurChargement && (
+        <p className="mb-6 rounded-lg border border-macao-terra bg-macao-terra/10 px-4 py-3 text-sm text-macao-terra">
+          Le journal n’a pas pu être rafraîchi ({erreurChargement}). Rechargez la page pour voir
+          l’échange qui vient d’être enregistré.
+        </p>
+      )}
+
+      {/* `lg` et non `md` : à 768 px la barre latérale est encore un tiroir et
+          la page occupe toute la largeur ; quatre colonnes y seraient à l'étroit. */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Compteur titre="Projets" valeur={historique.nbOpportunites} couleur="#206b73" />
+        <Compteur titre="Devis déposés" valeur={historique.nbDossiersDeposes} couleur="#e9a94e" />
         <Compteur titre="Gagnés" valeur={historique.nbGagnes} couleur="#206b73" />
         <Compteur titre="Perdus" valeur={historique.nbPerdus} couleur="#c0562f" />
       </div>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
-        <h2 className="font-serif text-xl text-macao-ink mb-4">Interlocuteurs</h2>
+      {/* Ordre et état par défaut : ce qu'on vient consulter (qui contacter, ce
+          qu'on s'est dit) reste ouvert ; l'historique et les références se
+          déplient à la demande, compteur en titre pour savoir sans ouvrir. */}
+      <SectionRepliable titre="Interlocuteurs" ouvertParDefaut>
         {interlocuteurs.length === 0 ? (
           <p className="text-sm text-macao-ink/55">Aucun interlocuteur enregistré.</p>
         ) : (
@@ -145,7 +206,7 @@ export default function OrganisationDetail() {
             {interlocuteurs.map((i, index) => (
               <li key={i.id || `interlocuteur-${index}`} className="border-b border-macao-ink/10 pb-4 last:border-0 last:pb-0">
                 <div className="flex flex-wrap items-center gap-3 mb-1">
-                  <span className="text-macao-ink font-medium">{ouTiret(i.nom)}</span>
+                  <span className="min-w-0 break-words text-macao-ink font-medium">{ouTiret(i.nom)}</span>
                   {/* Contrainte réglementaire : une opposition au démarchage doit
                       sauter aux yeux avant tout contact, pas se deviner. */}
                   {i.opposition && (
@@ -154,8 +215,8 @@ export default function OrganisationDetail() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-macao-ink/60">{ouTiret(i.fonction)}</p>
-                <p className="text-sm text-macao-ink/60">
+                <p className="break-words text-sm text-macao-ink/60">{ouTiret(i.fonction)}</p>
+                <p className="break-words text-sm text-macao-ink/60">
                   {ouTiret(i.email)} · {ouTiret(i.telephone)}
                 </p>
                 {i.notes && <p className="text-sm text-macao-ink/60 mt-1">{i.notes}</p>}
@@ -163,69 +224,15 @@ export default function OrganisationDetail() {
             ))}
           </ul>
         )}
-      </section>
+      </SectionRepliable>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="font-serif text-xl text-macao-ink">Journal des échanges</h2>
-          {!formulaireOuvert && (
-            <button
-              type="button"
-              onClick={() => { setAvertissements([]); setFormulaireOuvert(true) }}
-              className="px-4 py-2 rounded-lg bg-macao-terra text-white text-sm"
-            >
-              Journaliser un échange
-            </button>
-          )}
-        </div>
-
-        {formulaireOuvert && (
-          <div className="mb-6">
-            <FormulaireEchange
-              organisation={o}
-              onEnregistre={echangeEnregistre}
-              onAnnuler={() => setFormulaireOuvert(false)}
-            />
-          </div>
-        )}
-
-        {/* Ce ne sont pas des erreurs : l'échange est bien enregistré, mais le
-            serveur signale ce qu'il n'a pas pu faire (relance sans date, auteur
-            non résolu). D'où le ton ambre et la fermeture à la main. */}
-        {avertissements.length > 0 && (
-          <div className="mb-4 rounded-lg border border-macao-gold bg-macao-gold/15 px-4 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <ul className="text-sm text-macao-ink space-y-1">
-                {avertissements.map((a) => <li key={a}>{a}</li>)}
-              </ul>
-              <button
-                type="button"
-                onClick={() => setAvertissements([])}
-                aria-label="Masquer les avertissements"
-                className="text-macao-ink/60 text-sm shrink-0"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Fiche à l'écran malgré une erreur : c'est un rechargement discret qui
-            a échoué, le journal affiché peut donc être en retard d'un échange. */}
-        {erreurChargement && (
-          <p className="mb-4 rounded-lg border border-macao-terra bg-macao-terra/10 px-4 py-3 text-sm text-macao-terra">
-            Le journal n’a pas pu être rafraîchi ({erreurChargement}). Rechargez la page pour voir
-            l’échange qui vient d’être enregistré.
-          </p>
-        )}
-
+      <SectionRepliable titre="Journal des échanges" ouvertParDefaut>
         <JournalEchange interactions={interactions} />
-      </section>
+      </SectionRepliable>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
-        <h2 className="font-serif text-xl text-macao-ink mb-4">Opportunités</h2>
+      <SectionRepliable titre="Projets" compteur={opportunites.length}>
         {opportunites.length === 0 ? (
-          <p className="text-sm text-macao-ink/55">Aucune opportunité rattachée.</p>
+          <p className="text-sm text-macao-ink/55">Aucun projet rattaché.</p>
         ) : (
           <ul className="space-y-3">
             {opportunites.map((op, index) => (
@@ -233,7 +240,7 @@ export default function OrganisationDetail() {
                 key={op.id || `opportunite-${index}`}
                 className="flex flex-wrap gap-x-8 gap-y-1 border-b border-macao-ink/10 pb-3 last:border-0 last:pb-0"
               >
-                <span className="text-macao-ink">{ouTiret(op.nom)}</span>
+                <span className="break-words text-macao-ink">{ouTiret(op.nom)}</span>
                 <span className="text-sm">
                   <span className="text-macao-ink/50">Statut </span>
                   <b>{ouTiret(op.statut)}</b>
@@ -246,12 +253,11 @@ export default function OrganisationDetail() {
             ))}
           </ul>
         )}
-      </section>
+      </SectionRepliable>
 
-      <section className="bg-white rounded-xl p-6 mb-6">
-        <h2 className="font-serif text-xl text-macao-ink mb-4">Dossiers de réponse</h2>
+      <SectionRepliable titre="Devis" compteur={dossiers.length}>
         {dossiers.length === 0 ? (
-          <p className="text-sm text-macao-ink/55">Aucun dossier de réponse.</p>
+          <p className="text-sm text-macao-ink/55">Aucun devis.</p>
         ) : (
           <ul className="space-y-3">
             {dossiers.map((d, index) => (
@@ -259,7 +265,7 @@ export default function OrganisationDetail() {
                 key={d.id || `dossier-${index}`}
                 className="flex flex-wrap gap-x-8 gap-y-1 border-b border-macao-ink/10 pb-3 last:border-0 last:pb-0"
               >
-                <span className="text-macao-ink">{ouTiret(d.nom)}</span>
+                <span className="break-words text-macao-ink">{ouTiret(d.nom)}</span>
                 <span className="text-sm">
                   <span className="text-macao-ink/50">Statut </span>
                   <b>{ouTiret(d.statut)}</b>
@@ -272,10 +278,9 @@ export default function OrganisationDetail() {
             ))}
           </ul>
         )}
-      </section>
+      </SectionRepliable>
 
-      <section className="bg-white rounded-xl p-6">
-        <h2 className="font-serif text-xl text-macao-ink mb-4">Informations</h2>
+      <SectionRepliable titre="Informations">
         <div className="space-y-3">
           {[
             ['Nature', ouTiret(o.nature)],
@@ -286,21 +291,29 @@ export default function OrganisationDetail() {
             ['Origine', ouTiret(o.origine)],
             ['Référent Macao', ouTiret(o.referent)],
             ['Dernier échange', formaterDate(o.dernierEchange)],
-            ['Dernière opportunité', formaterDate(historique.derniereOpportunite)],
+            ['Dernier projet', formaterDate(historique.derniereOpportunite)],
             ['Plateforme', ouTiret(o.plateforme)],
             ['Particularités', ouTiret(o.particularites)],
             ['Notes', ouTiret(o.notes)]
           ].map(([label, valeur]) => (
-            <div key={label} className="flex border-b border-macao-ink/10 pb-3 last:border-0">
-              <span className="w-44 text-macao-ink/55 text-sm shrink-0">{label}</span>
-              <span className="text-macao-ink">{valeur}</span>
+            // Sous `sm` le libellé passe au-dessus de sa valeur : une colonne de
+            // 176 px sur un écran de 375 ne laissait à la valeur qu'une gouttière
+            // où « Communauté d'agglomération » se cassait en huit lignes.
+            // `gap-y` sépare les deux lignes une fois empilées, sans quoi elles
+            // se lisent comme un seul bloc.
+            <div
+              key={label}
+              className="flex flex-col gap-x-4 gap-y-0.5 border-b border-macao-ink/10 pb-3 last:border-0 sm:flex-row"
+            >
+              <span className="text-macao-ink/55 text-sm sm:w-44 sm:shrink-0">{label}</span>
+              <span className="min-w-0 break-words text-macao-ink">{valeur}</span>
             </div>
           ))}
         </div>
         <p className="text-sm text-macao-ink/50 mt-4">
           Ces informations se saisissent dans Airtable.
         </p>
-      </section>
+      </SectionRepliable>
     </div>
   )
 }
