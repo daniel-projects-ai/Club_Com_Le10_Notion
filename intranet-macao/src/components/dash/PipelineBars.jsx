@@ -5,7 +5,7 @@ export default function PipelineBars({ parStatut = {} }) {
   const entrees = Object.entries(parStatut)
 
   if (entrees.length === 0) {
-    return <p className="text-sm text-neutral-500">Aucune opportunité à afficher.</p>
+    return <p className="text-sm text-neutral-500">Aucun projet à afficher.</p>
   }
 
   const maximum = Math.max(...entrees.map(([, nombre]) => nombre), 1)

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
+import BarreActions from '../components/BarreActions'
 import { formaterDate, ouTiret } from '../lib/format'
 
 export default function Dossiers() {
@@ -9,22 +10,20 @@ export default function Dossiers() {
   const { donnees, chargement, erreur } = useRequete(api.dossiers)
 
   if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
-  if (erreur) return <div className="p-10 text-macao-terra">Impossible de charger les dossiers : {erreur}</div>
+  if (erreur) return <div className="p-10 text-macao-terra">Impossible de charger les devis : {erreur}</div>
 
   // useRequete déballe déjà l'enveloppe { data } de l'API : `donnees` est le tableau.
   const dossiers = donnees || []
   const estMacao = user?.role === 'Macao'
 
   return (
-    <div className="p-10 max-w-6xl">
-      <h1 className="font-serif text-3xl text-macao-ink mb-1">
-        {estMacao ? 'Dossiers de réponse' : 'Mes dossiers'}
-      </h1>
-      <p className="text-macao-ink/60 mb-8">
-        {estMacao
-          ? `${dossiers.length} dossier${dossiers.length > 1 ? 's' : ''}`
-          : 'Les dossiers sur lesquels vous êtes mobilisé'}
-      </p>
+    <div className="p-5 sm:p-10 max-w-6xl">
+      <BarreActions
+        titre={estMacao ? 'Devis' : 'Mes devis'}
+        sousTitre={estMacao
+          ? `${dossiers.length} devis`
+          : 'Les devis sur lesquels vous êtes mobilisé'}
+      />
 
       <div className="space-y-4">
         {dossiers.map(d => (
@@ -33,7 +32,7 @@ export default function Dossiers() {
             to={`/dossiers/${d.id}`}
             // Sans aria-label, le lien englobant ferait lire tout le contenu de la
             // carte comme nom accessible : illisible en navigation par liens.
-            aria-label={`Dossier ${d.nom}${d.bloque ? ' — à traiter' : ''}`}
+            aria-label={`Devis ${d.nom}${d.bloque ? ' — à traiter' : ''}`}
             className={`block bg-white rounded-xl p-6 border-l-4 hover:shadow-md transition-shadow ${
               d.bloque ? 'border-macao-terra' : 'border-macao-teal'
             }`}
@@ -68,8 +67,8 @@ export default function Dossiers() {
         {!dossiers.length && (
           <p className="text-macao-ink/50">
             {estMacao
-              ? 'Aucun dossier. Créez-en un depuis une opportunité passée en GO.'
-              : 'Vous n’êtes mobilisé sur aucun dossier pour le moment.'}
+              ? 'Aucun devis. Créez-en un depuis un projet passé en GO.'
+              : 'Vous n’êtes mobilisé sur aucun devis pour le moment.'}
           </p>
         )}
       </div>

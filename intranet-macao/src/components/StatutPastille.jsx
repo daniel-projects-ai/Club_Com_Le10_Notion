@@ -1,4 +1,4 @@
-// Pastille de statut, partagée par le tableau de bord et la liste des opportunités.
+// Pastille de statut, partagée par le tableau de bord et la liste des projets.
 export default function StatutPastille({ statut }) {
   if (!statut) return null
   return (

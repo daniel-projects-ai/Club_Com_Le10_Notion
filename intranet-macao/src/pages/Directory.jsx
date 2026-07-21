@@ -1,20 +1,18 @@
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
+import BarreActions from '../components/BarreActions'
 
 export default function Directory() {
   const { donnees, chargement, erreur } = useRequete(api.annuaire)
 
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger l'annuaire : {erreur}</p>
+  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger la communauté : {erreur}</p>
 
   const membres = donnees || []
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Annuaire</h1>
-        <p className="mt-1 text-sm text-neutral-500">Les coworkers du Club Com' Le 10</p>
-      </header>
+    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+      <BarreActions titre="Communauté" sousTitre="Les coworkers du Club Com' Le 10" />
 
       {membres.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucun membre à afficher pour le moment.</p>

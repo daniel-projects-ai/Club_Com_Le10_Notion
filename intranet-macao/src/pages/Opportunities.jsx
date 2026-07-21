@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
 import StatutPastille from '../components/StatutPastille'
+import BarreActions from '../components/BarreActions'
+import PipelineBars from '../components/dash/PipelineBars'
 import { formaterBudget, formaterDate, ouTiret } from '../lib/format'
 
 // Même liste fermée que côté serveur (STATUTS_OPPORTUNITE). Le front s'en
@@ -83,15 +85,15 @@ function BoutonInteret({ opp, onChange }) {
 }
 
 // Rattachement CRM — réservé à Macao. L'absence de rattachement n'est pas un
-// détail décoratif : sans elle rien ne signale que l'opportunité sortira de
-// l'historique de l'organisation, et le CRM se vide en silence.
+// détail décoratif : sans elle rien ne signale que le projet sortira de
+// l'historique du client, et le CRM se vide en silence.
 function LienOrganisation({ opp }) {
   const [premiere] = Array.isArray(opp.organisationIds) ? opp.organisationIds : []
 
   if (!premiere) {
     return (
       <span className="self-center text-xs italic text-neutral-500">
-        Aucune organisation rattachée
+        Aucun client rattaché
       </span>
     )
   }
@@ -101,18 +103,18 @@ function LienOrganisation({ opp }) {
       to={`/organisations/${premiere}`}
       className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
     >
-      Voir l’organisation
+      Voir le client
     </Link>
   )
 }
 
-// Un dossier de réponse ne se justifie qu'une fois la décision de répondre prise :
-// inutile de proposer la création sur une opportunité encore à analyser ou abandonnée.
+// Un devis ne se justifie qu'une fois la décision de répondre prise : inutile
+// de proposer la création sur un projet encore à analyser ou abandonné.
 const STATUTS_AVEC_DOSSIER = ['GO', 'Transmis au Club', 'En réponse']
 
-// Création du dossier de réponse — réservé à Macao (le serveur renvoie 403 aux autres).
-// L'état vit dans le composant, donc par carte : une erreur sur l'opportunité A
-// ne peut pas s'afficher sous l'opportunité B.
+// Création du devis — réservée à Macao (le serveur renvoie 403 aux autres).
+// L'état vit dans le composant, donc par carte : une erreur sur le projet A
+// ne peut pas s'afficher sous le projet B.
 function BoutonCreerDossier({ opp, onCree }) {
   const navigate = useNavigate()
   const [enCours, setEnCours] = useState(false)
@@ -132,7 +134,7 @@ function BoutonCreerDossier({ opp, onCree }) {
       // message renvoyé par le serveur (« Un dossier existe déjà »).
       setErreur(
         /dossier existe d[ée]j[àa]/i.test(e.message || '')
-          ? 'Un dossier existe déjà pour cette opportunité'
+          ? 'Un devis existe déjà pour ce projet'
           : 'La création a échoué'
       )
     } finally {
@@ -148,7 +150,7 @@ function BoutonCreerDossier({ opp, onCree }) {
         disabled={enCours}
         className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra disabled:opacity-50"
       >
-        {enCours ? 'Création…' : 'Créer le dossier de réponse'}
+        {enCours ? 'Création…' : 'Créer le devis'}
       </button>
       {erreur && <p className="mt-1 text-2xs text-macao-terra">{erreur}</p>}
     </div>
@@ -271,9 +273,24 @@ export default function Opportunities() {
     setOpportunites((liste) => liste.map(o => (o.id === id ? { ...o, ...champs } : o)))
   }
 
-  // Correspondance opportunité → dossier existant, pour ne pas proposer une
-  // création qui échouerait en 409. Seul Macao voit ces boutons : inutile de
-  // faire porter l'appel aux autres rôles.
+  // Répartition par statut, calculée sur les projets déjà chargés — aucun appel
+  // réseau supplémentaire. Même règle que le serveur (« Sans statut » pour un
+  // statut vide, comptage sur la même liste que celle rendue par /opportunities),
+  // donc le même résultat qu'au tableau de bord ; à ceci près qu'un changement
+  // de statut fait ici se répercute aussitôt, là où la valeur du serveur
+  // attendait un rechargement.
+  const parStatut = useMemo(() => {
+    const compte = {}
+    for (const opp of opportunites) {
+      const statut = opp.status || 'Sans statut'
+      compte[statut] = (compte[statut] || 0) + 1
+    }
+    return compte
+  }, [opportunites])
+
+  // Correspondance projet → devis existant, pour ne pas proposer une création
+  // qui échouerait en 409. Seul Macao voit ces boutons : inutile de faire porter
+  // l'appel aux autres rôles.
   const [dossiersParOpportunite, setDossiersParOpportunite] = useState({})
   useEffect(() => {
     if (!estMacao) return
@@ -294,19 +311,27 @@ export default function Opportunities() {
   }, [estMacao])
 
   if (chargement) return <p className="p-10 text-sm text-neutral-500">Chargement…</p>
-  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les opportunités : {erreur}</p>
+  if (erreur) return <p className="p-10 text-sm text-macao-terra">Impossible de charger les projets : {erreur}</p>
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Opportunités</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {opportunites.length} opportunité{opportunites.length > 1 ? 's' : ''} visible{opportunites.length > 1 ? 's' : ''}
-        </p>
-      </header>
+    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+      <BarreActions
+        titre="Projets"
+        sousTitre={`${opportunites.length} projet${opportunites.length > 1 ? 's' : ''} visible${opportunites.length > 1 ? 's' : ''}`}
+      />
+
+      {/* Pilotage réservé à Macao : un coworker ne voit qu'une partie des
+          projets, un pipeline calculé sur cette part lui donnerait une vue
+          fausse de l'activité de l'agence. */}
+      {estMacao && opportunites.length > 0 && (
+        <section className="mb-10 rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-4 font-serif text-xl text-macao-ink">Pipeline par statut</h2>
+          <PipelineBars parStatut={parStatut} />
+        </section>
+      )}
 
       {opportunites.length === 0 ? (
-        <p className="text-sm text-neutral-500">Aucune opportunité à afficher pour le moment.</p>
+        <p className="text-sm text-neutral-500">Aucun projet à afficher pour le moment.</p>
       ) : (
         <div className="space-y-4">
           {opportunites.map((opp) => (
@@ -334,7 +359,7 @@ export default function Opportunities() {
                         to={`/dossiers/${dossiersParOpportunite[opp.id]}`}
                         className="rounded-full border border-macao-teal px-4 py-2 text-sm font-semibold text-macao-teal transition hover:border-macao-terra hover:text-macao-terra"
                       >
-                        Voir le dossier de réponse
+                        Voir le devis
                       </Link>
                     )
                     : (

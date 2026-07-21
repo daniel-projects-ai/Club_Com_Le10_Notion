@@ -1,6 +1,7 @@
 import { api } from '../lib/api'
 import { useRequete } from '../lib/useRequete'
 import { useAuth } from '../context/AuthContext'
+import BarreActions from '../components/BarreActions'
 import { ouTiret } from '../lib/format'
 
 function Ligne({ label, valeur }) {
@@ -25,11 +26,11 @@ export default function Profile() {
   const metiers = (profil.metiers || []).join(', ')
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-macao-ink">Mon profil</h1>
-        <p className="mt-1 text-sm text-neutral-500">Vos informations telles qu'elles apparaissent dans l'annuaire</p>
-      </header>
+    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      <BarreActions
+        titre="Mon profil"
+        sousTitre="Vos informations telles qu'elles apparaissent dans la Communauté"
+      />
 
       <div className="rounded-xl bg-white shadow-sm">
         <Ligne label="Nom" valeur={ouTiret(profil.nom)} />

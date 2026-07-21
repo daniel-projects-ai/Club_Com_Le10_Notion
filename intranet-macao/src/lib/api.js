@@ -42,7 +42,7 @@ export const api = {
   annuaire: () => appel('/directory'),
   profil: () => appel('/profile'),
 
-  // Se déclarer intéressé par une opportunité (ou revenir sur sa décision).
+  // Se déclarer intéressé par un projet (ou revenir sur sa décision).
   sePositionner: (id) => appel(`/opportunities/${id}/interest`, { method: 'POST' }),
   retirerPositionnement: (id) => appel(`/opportunities/${id}/interest`, { method: 'DELETE' }),
 
@@ -51,7 +51,7 @@ export const api = {
     appel(`/opportunities/${id}/status`, { method: 'PATCH', body: JSON.stringify({ statut }) }),
   positionnements: (id) => appel(`/opportunities/${id}/positionnements`),
 
-  // Dossiers de réponse
+  // Devis (routes et clés inchangées : c'est le vocabulaire Airtable)
   dossiers: () => appel('/dossiers'),
   dossier: (id) => appel(`/dossiers/${id}`),
   creerDossier: (opportuniteId) =>

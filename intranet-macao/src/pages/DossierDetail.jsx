@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import { formaterDate, formaterBudget, ouTiret } from '../lib/format'
 import ChantierCarte from '../components/ChantierCarte'
 import PiecesChecklist from '../components/PiecesChecklist'
+import BarreActions from '../components/BarreActions'
+import SectionRepliable from '../components/SectionRepliable'
 
 const ETATS_MEMOIRE = ['Non commencé', 'Plan créé', 'V1 rédigée', 'En relecture', 'Finalisé', 'Non demandé']
 const ETATS_OFFRE = ['Non commencée', 'En cours', 'À valider', 'Validée', 'Non demandée']
@@ -44,7 +46,7 @@ export default function DossierDetail() {
     api.dossier(id)
       .then(({ data }) => { if (!annule) setD(data) })
       .catch((e) => {
-        // On distingue l'échec réseau/403 d'un dossier vide : sinon un refus
+        // On distingue l'échec réseau/403 d'un devis vide : sinon un refus
         // d'accès et une panne s'affichent à l'identique et n'orientent pas
         // l'utilisateur vers la bonne action.
         if (!annule) { setD(null); setErreurChargement(e.message) }
@@ -58,8 +60,8 @@ export default function DossierDetail() {
     setErreur(null)
     try {
       const { data } = await api.majDossier(id, champs)
-      // Le PATCH ne renvoie ni `acheteur` ni `equipe` (ils viennent de
-      // l'opportunité liée) : on fusionne pour ne pas les effacer de l'écran.
+      // Le PATCH ne renvoie ni `acheteur` ni `equipe` (ils viennent du projet
+      // lié) : on fusionne pour ne pas les effacer de l'écran.
       setD((precedent) => ({
         ...data,
         acheteur: precedent?.acheteur ?? null,
@@ -96,11 +98,11 @@ export default function DossierDetail() {
   if (!d) {
     return (
       <div className="p-10">
-        <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les dossiers</Link>
+        <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les devis</Link>
         <p className="text-macao-terra">
           {erreurChargement
-            ? `Impossible d’afficher ce dossier : ${erreurChargement}`
-            : 'Dossier indisponible.'}
+            ? `Impossible d’afficher ce devis : ${erreurChargement}`
+            : 'Devis indisponible.'}
         </p>
       </div>
     )
@@ -111,20 +113,19 @@ export default function DossierDetail() {
   const equipe = Array.isArray(d.equipe) ? d.equipe : []
 
   return (
-    <div className="p-10 max-w-5xl">
-      <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les dossiers</Link>
+    <div className="p-5 sm:p-10 max-w-5xl">
+      <Link to="/dossiers" className="text-sm text-macao-teal mb-4 inline-block">← Tous les devis</Link>
 
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <h1 className="font-serif text-3xl text-macao-ink">{d.nom}</h1>
+      <BarreActions
+        titre={d.nom}
+        sousTitre={`Échéance ${formaterDate(d.dateLimite)} · Statut ${ouTiret(d.statut)} · Acheteur ${ouTiret(d.acheteur)}`}
+      >
         {d.bloque && (
           <span className="text-xs px-3 py-1 rounded-full bg-macao-terra text-white shrink-0">
             À traiter
           </span>
         )}
-      </div>
-      <p className="text-macao-ink/60 mb-8">
-        Échéance {formaterDate(d.dateLimite)} · Statut {ouTiret(d.statut)} · Acheteur {ouTiret(d.acheteur)}
-      </p>
+      </BarreActions>
 
       {erreur && <p className="text-macao-terra text-sm mb-4">{erreur}</p>}
 
@@ -164,7 +165,7 @@ export default function DossierDetail() {
       <section className="bg-white rounded-xl p-6 mb-6">
         <h2 className="font-serif text-xl text-macao-ink mb-4">Équipe mobilisée</h2>
         {equipe.length === 0 ? (
-          <p className="text-sm text-macao-ink/55">Personne n’est encore mobilisé sur ce dossier.</p>
+          <p className="text-sm text-macao-ink/55">Personne n’est encore mobilisé sur ce devis.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {equipe.map((nom, i) => (
@@ -179,8 +180,9 @@ export default function DossierDetail() {
         )}
       </section>
 
-      <section className="bg-white rounded-xl p-6">
-        <h2 className="font-serif text-xl text-macao-ink mb-4">Informations</h2>
+      {/* Repliée : ce sont des références qu'on va chercher, pas ce qu'on suit
+          au quotidien. Les chantiers et la check-list, eux, restent dépliés. */}
+      <SectionRepliable titre="Informations">
         <div className="space-y-3">
           {[
             ['Responsable', ouTiret(d.responsable)],
@@ -203,7 +205,7 @@ export default function DossierDetail() {
         <p className="text-sm text-macao-ink/50 mt-4">
           Les textes longs (questions, éléments à réutiliser) se saisissent dans Airtable.
         </p>
-      </section>
+      </SectionRepliable>
     </div>
   )
 }
