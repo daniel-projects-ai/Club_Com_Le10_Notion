@@ -16,6 +16,9 @@ function mapCoworker(r) {
   return {
     id: r.id,
     nom: f['Nom affiché'] || f['Nom complet'] || 'Sans nom',
+    // Exposé pour la résolution de l'auteur d'un échange : c'est le seul champ
+    // qui corresponde exactement aux options du single select « Auteur ».
+    prenom: f['Prénom'] || null,
     email: (f['Email'] || '').toLowerCase(),
     role: f['Rôle'] || null,
     statut: f['Statut'] || null,

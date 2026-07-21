@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { formaterDate, ouTiret } from '../lib/format'
+import FormulaireEchange from '../components/FormulaireEchange'
+import JournalEchange from '../components/JournalEchange'
 
 // Le site web est saisi dans Airtable : ce n'est pas forcément une URL exploitable.
 function SiteWeb({ url }) {
@@ -35,21 +37,62 @@ export default function OrganisationDetail() {
   const [o, setO] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [erreurChargement, setErreurChargement] = useState(null)
+  const [formulaireOuvert, setFormulaireOuvert] = useState(false)
+  const [avertissements, setAvertissements] = useState([])
 
+  // Déclaré avant l'effet de chargement pour que le montage soit enregistré
+  // avant qu'une requête ne puisse aboutir.
+  const monte = useRef(true)
   useEffect(() => {
-    let annule = false
-    setChargement(true)
-    setErreurChargement(null)
-    api.organisation(id)
-      .then(({ data }) => { if (!annule) setO(data) })
+    monte.current = true
+    return () => { monte.current = false }
+  }, [])
+
+  // Jeton de course : un rechargement lancé après un enregistrement peut
+  // revenir alors que l'utilisateur a déjà ouvert une autre fiche. Seule la
+  // dernière requête émise a le droit d'écrire dans l'état.
+  const derniereRequete = useRef(0)
+
+  // `discret` : rechargement après enregistrement, sans repasser la page
+  // entière en « Chargement… » alors qu'elle est déjà affichée.
+  const charger = useCallback((discret = false) => {
+    const jeton = ++derniereRequete.current
+    const valide = () => monte.current && jeton === derniereRequete.current
+    if (!discret) {
+      setChargement(true)
+      setErreurChargement(null)
+    }
+    return api.organisation(id)
+      .then(({ data }) => { if (valide()) { setO(data); setErreurChargement(null) } })
       .catch((e) => {
+        if (!valide()) return
         // On conserve le message du serveur : un refus d'accès (403) et une
         // fiche inexistante (404) doivent rester distinguables à l'écran.
-        if (!annule) { setO(null); setErreurChargement(e.message) }
+        setErreurChargement(e.message)
+        // Un rechargement discret qui échoue ne doit pas effacer une fiche déjà
+        // à l'écran : l'échange vient d'être enregistré, la remplacer par une
+        // page d'erreur laisserait croire que l'enregistrement a échoué.
+        if (!discret) setO(null)
       })
-      .finally(() => { if (!annule) setChargement(false) })
-    return () => { annule = true }
+      .finally(() => { if (valide()) setChargement(false) })
   }, [id])
+
+  useEffect(() => {
+    // Changer de fiche remet à zéro ce qui appartenait à la précédente.
+    setFormulaireOuvert(false)
+    setAvertissements([])
+    charger()
+  }, [charger])
+
+  function echangeEnregistre(resultat) {
+    // Le formulaire va être démonté : les avertissements qu'il affichait
+    // disparaîtraient avec lui, on les remonte donc dans l'état de la page.
+    // Affectation systématique : ceux de l'enregistrement précédent ne doivent
+    // pas survivre au suivant.
+    setAvertissements(Array.isArray(resultat?.avertissements) ? resultat.avertissements : [])
+    setFormulaireOuvert(false)
+    charger(true)
+  }
 
   if (chargement) return <div className="p-10 text-macao-ink/60">Chargement…</div>
   if (!o) {
@@ -73,6 +116,7 @@ export default function OrganisationDetail() {
   const interlocuteurs = Array.isArray(o.interlocuteurs) ? o.interlocuteurs : []
   const opportunites = Array.isArray(o.opportunites) ? o.opportunites : []
   const dossiers = Array.isArray(o.dossiers) ? o.dossiers : []
+  const interactions = Array.isArray(o.interactions) ? o.interactions : []
 
   return (
     <div className="p-10 max-w-5xl">
@@ -119,6 +163,63 @@ export default function OrganisationDetail() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="bg-white rounded-xl p-6 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="font-serif text-xl text-macao-ink">Journal des échanges</h2>
+          {!formulaireOuvert && (
+            <button
+              type="button"
+              onClick={() => { setAvertissements([]); setFormulaireOuvert(true) }}
+              className="px-4 py-2 rounded-lg bg-macao-terra text-white text-sm"
+            >
+              Journaliser un échange
+            </button>
+          )}
+        </div>
+
+        {formulaireOuvert && (
+          <div className="mb-6">
+            <FormulaireEchange
+              organisation={o}
+              onEnregistre={echangeEnregistre}
+              onAnnuler={() => setFormulaireOuvert(false)}
+            />
+          </div>
+        )}
+
+        {/* Ce ne sont pas des erreurs : l'échange est bien enregistré, mais le
+            serveur signale ce qu'il n'a pas pu faire (relance sans date, auteur
+            non résolu). D'où le ton ambre et la fermeture à la main. */}
+        {avertissements.length > 0 && (
+          <div className="mb-4 rounded-lg border border-macao-gold bg-macao-gold/15 px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <ul className="text-sm text-macao-ink space-y-1">
+                {avertissements.map((a) => <li key={a}>{a}</li>)}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setAvertissements([])}
+                aria-label="Masquer les avertissements"
+                className="text-macao-ink/60 text-sm shrink-0"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Fiche à l'écran malgré une erreur : c'est un rechargement discret qui
+            a échoué, le journal affiché peut donc être en retard d'un échange. */}
+        {erreurChargement && (
+          <p className="mb-4 rounded-lg border border-macao-terra bg-macao-terra/10 px-4 py-3 text-sm text-macao-terra">
+            Le journal n’a pas pu être rafraîchi ({erreurChargement}). Rechargez la page pour voir
+            l’échange qui vient d’être enregistré.
+          </p>
+        )}
+
+        <JournalEchange interactions={interactions} />
       </section>
 
       <section className="bg-white rounded-xl p-6 mb-6">
